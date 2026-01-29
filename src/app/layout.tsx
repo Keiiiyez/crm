@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'VentaLink CRM',
+  title: 'CRM IVHAES',
   description: 'A CRM for managing sales, clients, products, and operators.',
 };
 

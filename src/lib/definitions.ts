@@ -9,6 +9,7 @@ export type Client = {
   province: string;
   postalCode: string;
   registrationDate: string;
+  IBAN?: string;
   avatarUrl?: string;
 };
 
