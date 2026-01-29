@@ -95,7 +95,7 @@ export const columns: ColumnDef<Client>[] = [
     header: "Registration Date",
     cell: ({ row }) => {
       const date = new Date(row.getValue("registrationDate"))
-      return new Intl.DateTimeFormat("en-US").format(date)
+      return new Intl.DateTimeFormat("en-US", { timeZone: "UTC" }).format(date)
     },
   },
   {
