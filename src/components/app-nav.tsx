@@ -55,7 +55,7 @@ export function AppNav({ isMobile }: AppNavProps) {
         className="flex items-center gap-2 text-lg font-semibold mb-4"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-primary"><path d="M2.5 17a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM21.5 7a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/><path d="M12 22V2M2.5 7.5l9-5.5 9 5.5"/><path d="M2.5 16.5l9 5.5 9-5.5"/></svg>
-        <span className="font-headline">VentaLink</span>
+        <span className="font-headline">CRM IVHAES</span>
       </Link>
       {navLinks.map((link) => (
         <div key={link.label}>
