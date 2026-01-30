@@ -4,8 +4,8 @@ export default function NewSalePage() {
   return (
     <div>
         <div className="mb-6">
-            <h1 className="text-3xl font-bold font-headline tracking-tight">Create New Sale</h1>
-            <p className="text-muted-foreground">Fill out the form below to register a new sale.</p>
+            <h1 className="text-3xl font-bold font-headline tracking-tight">Genera una nueva venta</h1>
+            <p className="text-muted-foreground">Completa el formulario a continuación para registrar una nueva venta.</p>
         </div>
         <SalesForm />
     </div>

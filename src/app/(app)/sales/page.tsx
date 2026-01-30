@@ -25,13 +25,13 @@ export default function SalesPage() {
       <CardHeader>
         <div className="flex justify-between items-start">
             <div>
-                <CardTitle className="font-headline">Sales</CardTitle>
-                <CardDescription>A list of all sales transactions.</CardDescription>
+                <CardTitle className="font-headline">Ventas</CardTitle>
+                <CardDescription>Lista de todas las ventas</CardDescription>
             </div>
             <Button asChild size="sm" className="gap-1">
                 <Link href="/sales/new">
                     <PlusCircle className="h-4 w-4" />
-                    New Sale
+                    Nueva Venta
                 </Link>
             </Button>
         </div>
@@ -40,12 +40,12 @@ export default function SalesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Client</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Operator</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Producto</TableHead>
+              <TableHead>Operador</TableHead>
+              <TableHead>Fecha</TableHead>
+              <TableHead className="text-right">Monto</TableHead>
+              <TableHead>Estatus</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

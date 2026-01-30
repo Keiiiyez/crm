@@ -10,11 +10,12 @@ export default function ProductsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline">Products</CardTitle>
-        <CardDescription>Manage your products.</CardDescription>
+        <CardTitle className="font-headline">Servicios</CardTitle>
+        <CardDescription>Administra los servicios de telefonía</CardDescription>
       </CardHeader>
       <CardContent>
-        <p>Product management interface will be here.</p>
+        <p>Los servicios estarán acá..</p>
+        
       </CardContent>
     </Card>
   )

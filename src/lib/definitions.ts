@@ -7,9 +7,10 @@ export type Client = {
   address: string;
   city: string;
   province: string;
+  operator?: string;
   postalCode: string;
   registrationDate: string;
-  IBAN?: string;
+  iban?: string;
   avatarUrl?: string;
 };
 

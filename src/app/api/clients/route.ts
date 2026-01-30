@@ -14,11 +14,11 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, dni, email, phone, address, city, province, postalCode, IBAN } = body;
+    const { name, dni, email, phone, address, city, province, postalCode, IBAN, operator } = body;
 
     const [result] = await db.query(
-      "INSERT INTO clientes (name, dni, email, phone, address, city, province, postalCode, iban) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [name, dni, email, phone, address, city, province, postalCode, IBAN]
+      "INSERT INTO clientes (name, dni, email, phone, address, city, province, postalCode, iban, operator) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [name, dni, email, phone, address, city, province, postalCode, IBAN, operator || null]
     );
 
     return NextResponse.json({ success: true, id: (result as any).insertId });

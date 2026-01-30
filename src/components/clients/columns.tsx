@@ -98,7 +98,7 @@ export const columns = (onEdit: (client: Client) => void): ColumnDef<Client>[] =
             });
             
             if (res.ok) {
-              toast.success("Cliente borrado de XAMPP");
+              toast.success("Cliente borrado");
               window.location.reload(); 
             } else {
               const errorData = await res.json();
@@ -132,7 +132,7 @@ export const columns = (onEdit: (client: Client) => void): ColumnDef<Client>[] =
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             
-            {/* AQUÍ LLAMAMOS A LA FUNCIÓN onEdit QUE PASAMOS DESDE LA PÁGINA */}
+            {}
             <DropdownMenuItem onClick={() => onEdit(client)}>
               <Pencil className="mr-2 h-4 w-4" /> Editar datos
             </DropdownMenuItem>

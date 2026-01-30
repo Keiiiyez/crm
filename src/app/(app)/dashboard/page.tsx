@@ -1,97 +1,120 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+"use client"
+
+import * as React from "react"
+import { DollarSign, Users, Package, ShoppingCart, Loader2 } from "lucide-react"
+import { toast } from "sonner"
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { sales, clients, products } from "@/lib/data"
-import { DollarSign, Users, Package, ShoppingCart } from "lucide-react"
+
 import { SalesChart } from "@/components/sales-chart"
+import type { Sale } from "@/lib/definitions"
 
 export default function DashboardPage() {
-  const totalRevenue = sales.reduce((acc, sale) => sale.status === 'Completed' ? acc + sale.amount : acc, 0)
+  const [sales, setSales] = React.useState<Sale[]>([])
+  const [metrics, setMetrics] = React.useState({ clients: 0, products: 0 })
+  const [loading, setLoading] = React.useState(true)
 
-  const stats = [
-    { title: "Total Revenue", value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, description: "Total revenue from completed sales" },
-    { title: "Sales", value: `+${sales.length}`, icon: ShoppingCart, description: "Total number of sales" },
-    { title: "New Clients", value: `+${clients.length}`, icon: Users, description: "Total number of clients" },
-    { title: "Products", value: `${products.length}`, icon: Package, description: "Total number of products" },
-  ]
+  React.useEffect(() => {
+    async function loadDashboard() {
+      try {
+        const [sRes, cRes, pRes] = await Promise.all([
+          fetch('/api/sales'),
+          fetch('/api/clients'),
+          fetch('/api/products')
+        ])
+
+        if (sRes.ok && cRes.ok && pRes.ok) {
+          setSales(await sRes.json())
+          const clients = await cRes.json()
+          const products = await pRes.json()
+          setMetrics({ clients: clients.length, products: products.length })
+        }
+      } catch (e) {
+        toast.error("Error cargando datos de XAMPP")
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadDashboard()
+  }, [])
+
+  const revenue = sales.reduce((acc, s) => s.status === 'Completed' ? acc + Number(s.amount) : acc, 0)
+
+  if (loading) return (
+    <div className="flex h-[80vh] items-center justify-center">
+      <Loader2 className="h-10 w-10 animate-spin text-primary" />
+    </div>
+  )
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium font-body">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold font-headline">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="space-y-6 p-4">
+      {/* Tarjetas de Estadísticas */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Ingresos" value={`$${revenue.toFixed(2)}`} icon={<DollarSign />} desc="Ventas completadas" />
+        <StatCard title="Clientes" value={`+${metrics.clients}`} icon={<Users />} desc="Total en base de datos" />
+        <StatCard title="Ventas" value={`+${sales.length}`} icon={<ShoppingCart />} desc="Transacciones totales" />
+        <StatCard title="Catálogo" value={`${metrics.products}`} icon={<Package />} desc="Productos activos" />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
+
+      <div className="grid gap-4 md:grid-cols-7">
+        {/* Gráfico principal */}
+        <Card className="md:col-span-4">
           <CardHeader>
-            <CardTitle className="font-headline">Sales Overview</CardTitle>
-            <CardDescription>A chart showing sales per month.</CardDescription>
+            <CardTitle>Rendimiento Comercial</CardTitle>
+            <CardDescription>Visualización de ventas mensuales</CardDescription>
           </CardHeader>
-          <CardContent className="pl-2">
+          <CardContent>
             <SalesChart />
           </CardContent>
         </Card>
-        <Card className="lg:col-span-3">
+
+        {/* Tabla de ventas recientes */}
+        <Card className="md:col-span-3">
           <CardHeader>
-            <CardTitle className="font-headline">Recent Sales</CardTitle>
-            <CardDescription>
-              You have {sales.length} sales in total.
-            </CardDescription>
+            <CardTitle>Últimos Movimientos</CardTitle>
           </CardHeader>
           <CardContent>
-             <Table>
-                <TableHeader>
-                    <TableRow>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {sales.slice(0, 5).map((sale) => (
-                    <TableRow key={sale.id}>
-                        <TableCell>
-                        <div className="font-medium">{sale.clientName}</div>
-                        <div className="text-sm text-muted-foreground">{sale.operatorName}</div>
-                        </TableCell>
-                        <TableCell>{sale.productName}</TableCell>
-                        <TableCell className="text-right">${sale.amount.toFixed(2)}</TableCell>
-                        <TableCell>
-                            <Badge variant={sale.status === 'Completed' ? 'default' : sale.status === 'Pending' ? 'secondary' : 'destructive'} className="text-xs" >
-                                {sale.status}
-                            </Badge>
-                        </TableCell>
-                    </TableRow>
-                    ))}
-                </TableBody>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente/Operador</TableHead>
+                  <TableHead className="text-right">Monto</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sales.slice(0, 6).map((sale) => (
+                  <TableRow key={sale.id}>
+                    <TableCell>
+                      <div className="font-medium text-sm">{sale.clientName}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase">{sale.operatorName}</div>
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm">
+                      ${Number(sale.amount).toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
             </Table>
           </CardContent>
         </Card>
       </div>
     </div>
+  )
+}
+
+function StatCard({ title, value, icon, desc }: { title: string, value: string, icon: React.ReactNode, desc: string }) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</CardTitle>
+        <div className="text-primary">{icon}</div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-[10px] text-muted-foreground mt-1">{desc}</p>
+      </CardContent>
+    </Card>
   )
 }

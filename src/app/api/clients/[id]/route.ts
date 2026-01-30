@@ -25,11 +25,11 @@ export async function PUT(
   try {
     const { id } = await params; 
     const body = await request.json();
-    const { name, dni, email, phone, address, city, province, postalCode, IBAN } = body;
+    const { name, dni, email, phone, address, city, province, postalCode, IBAN, operator } = body;
 
     await db.query(
-      "UPDATE clientes SET name=?, dni=?, email=?, phone=?, address=?, city=?, province=?, postalCode=?, iban=? WHERE id=?",
-      [name, dni, email, phone, address, city, province, postalCode, IBAN, id]
+      "UPDATE clientes SET name=?, dni=?, email=?, phone=?, address=?, city=?, province=?, postalCode=?, iban=?, operator=? WHERE id=?",
+      [name, dni, email, phone, address, city, province, postalCode, IBAN, operator || null, id]
     );
 
     return NextResponse.json({ message: "Actualizado OK" });
