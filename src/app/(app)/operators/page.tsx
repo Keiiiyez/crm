@@ -10,11 +10,11 @@ export default function OperatorsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline">Operators</CardTitle>
-        <CardDescription>Manage your sales operators.</CardDescription>
+        <CardTitle className="font-headline">Operadoras</CardTitle>
+        <CardDescription>Administra las operadoras disponibles en el sistema.</CardDescription>
       </CardHeader>
       <CardContent>
-        <p>Operator management interface will be here.</p>
+        <p>Operadoras en el sistema</p>
       </CardContent>
     </Card>
   )
