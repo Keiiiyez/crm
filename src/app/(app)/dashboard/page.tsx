@@ -20,9 +20,9 @@ export default function DashboardPage() {
     async function loadDashboard() {
       try {
         const [sRes, cRes, pRes] = await Promise.all([
-          fetch('/api/sales'),
+          fetch('/api2/sales'),
           fetch('/api/clients'),
-          fetch('/api/products')
+          fetch('/api2/products')
         ])
 
         if (sRes.ok && cRes.ok && pRes.ok) {
@@ -32,7 +32,7 @@ export default function DashboardPage() {
           setMetrics({ clients: clients.length, products: products.length })
         }
       } catch (e) {
-        toast.error("Error cargando datos de XAMPP")
+        toast.error("Error cargando datos")
       } finally {
         setLoading(false)
       }
