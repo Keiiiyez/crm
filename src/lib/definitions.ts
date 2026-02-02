@@ -43,7 +43,6 @@ export type Sale = {
   status: "Completed" | "Pending" | "Cancelled";
 };
 
-// As per user request for Sales Form
 export type Venta = {
   id: string;
   grupo?: string;

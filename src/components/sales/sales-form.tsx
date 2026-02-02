@@ -61,7 +61,7 @@ export function SalesForm() {
     }).catch(() => toast.error("Error de red"));
   }, [])
 
-  // --- LÓGICA DE SUMA ARREGLADA ---
+  
   const watchServicios = form.watch("servicios");
   
   const currentTotal = React.useMemo(() => {
@@ -75,7 +75,7 @@ export function SalesForm() {
     return Number((subtotal * (1 + taxRate)).toFixed(2));
   }, [watchServicios, selectedClient]);
 
-  // Actualizar el valor interno del formulario cada vez que cambie el total
+  
   React.useEffect(() => {
     form.setValue("precioCierre", currentTotal);
   }, [currentTotal, form]);
@@ -99,7 +99,7 @@ export function SalesForm() {
       theme: 'grid',
       headStyles: { fillColor: [30, 41, 59] }
     });
-    // @ts-ignore
+  
     const finalY = (doc as any).lastAutoTable.finalY || 100;
     autoTable(doc, {
       startY: finalY + 10,
@@ -139,7 +139,7 @@ export function SalesForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-[1400px] mx-auto p-4 md:p-8">
         
-        {/* BUSCADOR */}
+        {}
         <Card className="border-primary/20 bg-primary/5 shadow-sm">
           <CardContent className="pt-6">
             <Popover open={openSearch} onOpenChange={setOpenSearch}>
@@ -184,7 +184,7 @@ export function SalesForm() {
         {selectedClient && (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4">
             
-            {/* FICHA DEL CLIENTE (RESTAURADA) */}
+            {}
             <div className="xl:col-span-4 space-y-6">
               <Card className="overflow-hidden border-2 border-primary/10 shadow-xl">
                 <CardHeader className="bg-slate-900 text-white py-4">
@@ -221,7 +221,7 @@ export function SalesForm() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <label className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-1"><Navigation className="h-3 w-3" /> CP / Ciudad</label>
+                          <label className="text-[10px] font-black uppercase text-muted-foreground flex items-center gap-1"><Navigation className="h-3 w-3" /> Código Postal / Ciudad</label>
                           <p className="text-sm font-bold">{selectedClient.postalCode} - {selectedClient.city}</p>
                         </div>
                         <div className="space-y-1">
@@ -235,7 +235,7 @@ export function SalesForm() {
               </Card>
             </div>
 
-            {/* VENTAS (CON SUMA ARREGLADA) */}
+            {}
             <div className="xl:col-span-8 space-y-6">
               <Card className="shadow-xl border-t-4 border-t-primary">
                 <CardHeader className="flex flex-row items-center justify-between py-5 border-b">

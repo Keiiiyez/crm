@@ -46,10 +46,10 @@ export function AppHeader() {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuItem>Support</DropdownMenuItem>
+          <DropdownMenuItem>Ajustes</DropdownMenuItem>
+          <DropdownMenuItem>Ayuda</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Logout</DropdownMenuItem>
+          <DropdownMenuItem>Salir</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

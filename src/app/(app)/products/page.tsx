@@ -26,7 +26,7 @@ import {
 interface Product {
   id: string
   name: string
-  price: number | string // Aceptamos string porque MySQL lo devuelve así
+  price: number | string 
 }
 
 export default function ProductsPage() {
@@ -39,7 +39,7 @@ export default function ProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      // Mantenemos tu ruta api2
+      
       const res = await fetch('/api2/products')
       const data = await res.json()
       if (Array.isArray(data)) setProducts(data)
@@ -60,7 +60,7 @@ export default function ProductsPage() {
     
     setIsSaving(true)
     try {
-      // Mantenemos tu ruta api2
+      
       const res = await fetch('/api2/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,7 +83,7 @@ export default function ProductsPage() {
   const deleteProduct = async (id: string) => {
     if (!confirm("¿Eliminar este servicio?")) return
     try {
-      // Mantenemos tu ruta api2
+      
       const res = await fetch(`/api2/products/${id}`, { method: 'DELETE' })
       if (res.ok) {
         toast.success("Servicio eliminado")
@@ -165,7 +165,7 @@ export default function ProductsPage() {
                   <TableRow key={product.id}>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell className="font-mono text-primary">
-                      {/* EL FIX: Convertimos a Number antes de aplicar toFixed */}
+                      {}
                       {Number(product.price).toFixed(2)}€
                     </TableCell>
                     <TableCell className="text-right">
