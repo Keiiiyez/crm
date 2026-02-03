@@ -11,7 +11,9 @@ export type Client = {
   postalCode: string;
   registrationDate: string;
   iban?: string;
-  avatarUrl?: string;
+  avatarUrl?: string;   
+  new_operator?: string;  
+  status?: "en proceso" | "instalación" | "completa"; 
 };
 
 export type Product = {
@@ -40,7 +42,7 @@ export type Sale = {
   operatorName: string;
   saleDate: string;
   amount: number;
-  status: "Completed" | "Pending" | "Cancelled";
+  status: "en proceso" | "instalación" | "completa"; 
 };
 
 export type Venta = {
@@ -69,7 +71,7 @@ export type Venta = {
   numero?: string;
   operador: string;
   tipoDeLinea?: string;
-  estado: string;
+  estado: string; 
   subestado?: string;
   mesAct?: string;
   fchaAct: Date;

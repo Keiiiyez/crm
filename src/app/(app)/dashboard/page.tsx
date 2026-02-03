@@ -40,7 +40,7 @@ export default function DashboardPage() {
     loadDashboard()
   }, [])
 
-  const revenue = sales.reduce((acc, s) => s.status === 'Completed' ? acc + Number(s.amount) : acc, 0)
+  const revenue = sales.reduce((acc, s) => s.status === 'completa' ? acc + Number(s.amount) : acc, 0)
 
   if (loading) return (
     <div className="flex h-[80vh] items-center justify-center">
