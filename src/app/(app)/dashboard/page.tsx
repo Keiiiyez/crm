@@ -50,7 +50,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 p-4">
-      {/* Tarjetas de Estadísticas */}
+      {}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Ingresos" value={`$${revenue.toFixed(2)}`} icon={<DollarSign />} desc="Ventas completadas" />
         <StatCard title="Clientes" value={`+${metrics.clients}`} icon={<Users />} desc="Total en base de datos" />
@@ -59,7 +59,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-7">
-        {/* Gráfico principal */}
+        {}
         <Card className="md:col-span-4">
           <CardHeader>
             <CardTitle>Rendimiento Comercial</CardTitle>
@@ -70,7 +70,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Tabla de ventas recientes */}
+        {}
         <Card className="md:col-span-3">
           <CardHeader>
             <CardTitle>Últimos Movimientos</CardTitle>

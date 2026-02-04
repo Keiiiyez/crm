@@ -14,11 +14,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    // Extraemos el cliente y la venta del payload que enviamos desde el frontend
     const { client, sale } = body;
 
-    // 1. INSERTAR O ACTUALIZAR CLIENTE
-    // Usamos todos tus campos nuevos: nationality, birthDate, gender, bankName
     const [clientResult] = await db.query(
       `INSERT INTO clientes 
         (name, dni, email, phone, address, city, province, postalCode, iban, operator, nationality, birthDate, gender, bankName) 
@@ -52,12 +49,9 @@ export async function POST(request: Request) {
       ]
     );
 
-    // Obtenemos el ID del cliente (sea nuevo o ya existente)
     const [existingClient]: any = await db.query("SELECT id FROM clientes WHERE dni = ?", [client.dni]);
     const clienteId = existingClient[0].id;
 
-    // 2. GENERAR LA VENTA AUTOMÁTICAMENTE
-    // Si el Excel traía datos de precio u observaciones, creamos la venta
     if (sale && (sale.total > 0 || sale.observations)) {
       await db.query(
         `INSERT INTO sales 

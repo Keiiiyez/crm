@@ -22,12 +22,12 @@ const navLinks = [
   {
     href: "/sales",
     icon: DollarSign,
-    label: "Sales",
-    subLinks: [{ href: "/sales/new", label: "New Sale" }],
+    label: "Ventas",
+    subLinks: [{ href: "/sales/new", label: "Nueva Venta" }],
   },
-  { href: "/clients", icon: Users, label: "Clients" },
-  { href: "/products", icon: Package, label: "Products" },
-  { href: "/operators", icon: UserCog, label: "Operators" },
+  { href: "/clients", icon: Users, label: "Clientes" },
+  { href: "/products", icon: Package, label: "Servicios" },
+  { href: "/operators", icon: UserCog, label: "Operadores" },
 ]
 
 export function AppNav({ isMobile }: AppNavProps) {

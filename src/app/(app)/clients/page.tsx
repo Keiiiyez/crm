@@ -86,13 +86,11 @@ export default function ClientsPage() {
           nationality: String(findValueNextTo(["NACIONALIDAD"])).trim(),
           birthDate: String(findValueNextTo(["FECHA NAC.", "FECHA DE NACIMIENTO"])).trim(),
           gender: String(findValueNextTo(["GENERO", "GÉNERO"])).trim(),
-          bankName: String(findValueNextTo(["CAIXA", "BANCO"])).trim() || "Detectado",
+          bankName: String(findValueNextTo(["BANCO"])).trim(),
           observations: String(findValueNextTo(["OBSERVACIONES"])).trim()
         };
 
-        // --- MEJORA: Limpieza de precio para que NO se guarde como 0 ---
         const rawPrice = String(findValueNextTo(["TOTAL A PAGAR", "PROMOCION"]));
-        // Quitamos "€", espacios y cambiamos coma por punto
         const cleanPrice = rawPrice.replace(/[^\d,.]/g, '').replace(',', '.');
         const finalPrice = parseFloat(cleanPrice) || 0;
         
@@ -124,7 +122,7 @@ export default function ClientsPage() {
     setEditingClient(client)
     setOperator(client.operator || "") 
     setIbanValue(client.iban || "")
-    setPendingSale(null) // Si editamos, reseteamos venta pendiente para no duplicar
+    setPendingSale(null) 
     setOpen(true)
   }
 
@@ -153,11 +151,10 @@ export default function ClientsPage() {
 
     setIsSubmitting(true);
 
-    // --- MEJORA: Solo enviamos 'sale' si realmente viene de un Excel ---
-    // Si pendingSale existe y tiene un total > 0, lo enviamos. Si no, enviamos null.
     const finalPayload = {
       client: {
         ...clientFields,
+        id: editingClient?.id || undefined, 
         operator: operator,
         iban: ibanValue,
       },
@@ -178,6 +175,9 @@ export default function ClientsPage() {
         toast.success(editingClient?.id ? "Registro actualizado" : "Cliente guardado correctamente");
         setOpen(false);
         fetchClients(); 
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Error en el servidor");
       }
     } catch (error) {
       toast.error("Error al procesar la solicitud");
@@ -190,7 +190,7 @@ export default function ClientsPage() {
     <Card className="shadow-md">
       <CardHeader>
         <div className="flex justify-between items-start">
-          <div>
+          <div className="text-left">
             <CardTitle className="font-headline text-2xl tracking-tight text-primary">Clientes</CardTitle>
             <CardDescription>Gestión de identidades y datos de facturación.</CardDescription>
           </div>
@@ -203,7 +203,7 @@ export default function ClientsPage() {
 
             <Dialog open={open} onOpenChange={onOpenChange}>
               <DialogTrigger asChild>
-                <Button size="sm" className="gap-2" onClick={() => setPendingSale(null)}>
+                <Button size="sm" className="gap-2" onClick={() => { setEditingClient(null); setPendingSale(null); }}>
                    <PlusCircle className="h-4 w-4" /> Nuevo Registro
                 </Button>
               </DialogTrigger>
@@ -212,7 +212,7 @@ export default function ClientsPage() {
                   <DialogHeader>
                     <DialogTitle>{editingClient?.id ? `Editando: ${editingClient.name}` : "Datos del Cliente"}</DialogTitle>
                     <DialogDescription>
-                        {pendingSale ? "Se generará una venta automática de " + pendingSale.total + "€" : "Registro manual de cliente."}
+                        {pendingSale ? "Se generará una venta automática de " + pendingSale.total + "€" : "Registro de cliente."}
                     </DialogDescription>
                   </DialogHeader>
 
@@ -225,9 +225,9 @@ export default function ClientsPage() {
                     </Alert>
                   )}
 
-                  <div className="grid gap-4 py-4 grid-cols-3">
-                    {/* COLUMNA 1: IDENTIDAD */}
-                    <div className="space-y-4">
+                  <div className="grid gap-4 py-4 grid-cols-1 md:grid-cols-3">
+                    {}
+                    <div className="space-y-4 text-left">
                         <div className="space-y-1">
                             <Label htmlFor="name">Nombre Titular</Label>
                             <Input id="name" name="name" defaultValue={editingClient?.name || ""} required />
@@ -251,7 +251,7 @@ export default function ClientsPage() {
                     </div>
 
                     {/* COLUMNA 2: CONTACTO Y UBICACIÓN */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 text-left">
                         <div className="space-y-1">
                             <Label htmlFor="phone">Teléfono</Label>
                             <Input id="phone" name="phone" defaultValue={editingClient?.phone || ""} required />
@@ -280,8 +280,8 @@ export default function ClientsPage() {
                         </div>
                     </div>
 
-                    {/* COLUMNA 3: BANCO Y VENTA */}
-                    <div className="space-y-4">
+                    {}
+                    <div className="space-y-4 text-left">
                         <div className="space-y-1">
                             <Label>Operadora</Label>
                             <Select value={operator} onValueChange={setOperator} required>
@@ -296,10 +296,10 @@ export default function ClientsPage() {
                             <Input id="bankName" name="bankName" defaultValue={editingClient?.bankName || ""} />
                         </div>
                         <div className="space-y-1">
-                            <Label htmlFor="IBAN">IBAN</Label>
+                            <Label htmlFor="iban">IBAN</Label>
                             <Input 
-                                id="IBAN" 
-                                name="IBAN" 
+                                id="iban" 
+                                name="iban" 
                                 value={ibanValue} 
                                 onChange={(e) => setIbanValue(e.target.value.replace(/\s/g, ""))}
                                 required 
@@ -320,7 +320,7 @@ export default function ClientsPage() {
                   <DialogFooter className="bg-slate-50 p-4 -mx-6 -mb-6 border-t">
                     <Button type="submit" className="w-full" disabled={isSubmitting || (ibanValue.length > 0 && ibanValue.length !== 24)}>
                       {isSubmitting && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
-                      {editingClient?.id ? "Actualizar Registro" : pendingSale ? "Confirmar e Importar Venta" : "Registrar Cliente Manual"}
+                      {editingClient?.id ? "Actualizar Registro" : pendingSale ? "Confirmar e Importar Venta" : "Registrar Cliente"}
                     </Button>
                   </DialogFooter>
                 </form>

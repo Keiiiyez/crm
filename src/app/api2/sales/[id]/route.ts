@@ -8,18 +8,15 @@ const dbConfig = {
   database: "crm", 
 };
 
-// DELETE: Eliminar venta e items
 export async function DELETE(
   req: Request,
-  { params }: { params: Promise<{ id: string }> } // Tipado para Next.js 15
+  { params }: { params: Promise<{ id: string }> } 
 ) {
   let connection;
   try {
-    const { id } = await params; // Await necesario en Next.js 15
+    const { id } = await params; 
     connection = await mysql.createConnection(dbConfig);
 
-    // Gracias a tu 'ON DELETE CASCADE' en SQL, al borrar la venta
-    // se borrarán automáticamente los sale_items. ¡Buen trabajo ahí!
     const [result]: any = await connection.execute("DELETE FROM sales WHERE id = ?", [id]);
 
     if (result.affectedRows === 0) {
@@ -34,7 +31,6 @@ export async function DELETE(
   }
 }
 
-// PATCH: Actualizar el estado
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -46,7 +42,6 @@ export async function PATCH(
 
     connection = await mysql.createConnection(dbConfig);
 
-    // Esta query funcionará una vez ejecutes el ALTER TABLE que te pasé arriba
     const [result]: any = await connection.execute(
       "UPDATE sales SET status = ? WHERE id = ?",
       [status, id]

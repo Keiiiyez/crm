@@ -8,7 +8,6 @@ const dbConfig = {
   database: "crm", 
 };
 
-// GET: Obtener todas las ventas con sus items y datos de cliente
 export async function GET() {
   let connection;
   try {
@@ -50,7 +49,6 @@ export async function GET() {
   }
 }
 
-// POST: Guardar nueva venta y sus servicios
 export async function POST(req: Request) {
   let connection;
   try {
@@ -60,7 +58,6 @@ export async function POST(req: Request) {
 
     connection = await mysql.createConnection(dbConfig);
     
-    // Iniciar transacción para asegurar que se guarde todo o nada
     await connection.beginTransaction();
 
     const [saleResult]: any = await connection.execute(

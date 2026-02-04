@@ -1,38 +1,34 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import mysql from "mysql2/promise";
 
-// Maneja la carga de productos (GET)
+const dbConfig = {
+  host: "localhost",
+  user: "root",      
+  password: "",     
+  database: "crm", 
+};
 export async function GET() {
   try {
-    const [rows] = await db.query("SELECT * FROM products ORDER BY id DESC");
+    const connection = await mysql.createConnection(dbConfig);
+    const [rows] = await connection.execute("SELECT * FROM products ORDER BY name ASC");
+    await connection.end();
     return NextResponse.json(rows);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ error: "Error al leer productos" }, { status: 500 });
   }
 }
 
-// Maneja la creación de productos (POST)
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const { name, price } = body;
-
-    // Validamos que lleguen los datos
-    if (!name || !price) {
-      return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
-    }
-
-    const [result] = await db.query(
+    const { name, price } = await req.json();
+    const connection = await mysql.createConnection(dbConfig);
+    await connection.execute(
       "INSERT INTO products (name, price) VALUES (?, ?)",
       [name, price]
     );
-
-    return NextResponse.json({ 
-      success: true, 
-      id: (result as any).insertId 
-    });
+    await connection.end();
+    return NextResponse.json({ message: "Producto guardado" });
   } catch (error: any) {
-    console.error("Error en DB:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
