@@ -12,7 +12,10 @@ import {
   Search, 
   X,
   Phone,
-  Mail
+  Mail,
+  Fingerprint,
+  Globe,
+  Briefcase
 } from "lucide-react"
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
@@ -186,8 +189,8 @@ export default function ClientsPage() {
   return (
     <div className="space-y-8 p-8 bg-slate-50/50 min-h-screen text-slate-900">
       
-      {/* CABECERA ESTILO DASHBOARD */}
-      <div className="flex justify-between items-end px-2">
+      {/* CABECERA DASHBOARD */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 px-2">
         <div>
           <h1 className="text-3xl font-black tracking-tighter text-slate-800 flex items-center gap-3 uppercase">
             <User className="h-8 w-8 text-cyan-500" /> Cartera de Clientes
@@ -199,139 +202,145 @@ export default function ClientsPage() {
           <input type="file" className="hidden" ref={fileInputRef} accept=".xlsx, .xls" onChange={handleImportExcel} />
           <Button 
             variant="outline" 
-            className="h-12 border-none shadow-xl shadow-cyan-900/5 bg-white text-emerald-600 hover:bg-emerald-50 font-black text-[10px] uppercase rounded-2xl px-6 transition-all"
+            className="h-14 border-none shadow-xl shadow-cyan-900/5 bg-white text-emerald-600 hover:bg-emerald-50 font-black text-[10px] uppercase rounded-2xl px-6 transition-all"
             onClick={() => fileInputRef.current?.click()}
           >
-            <FileSpreadsheet className="h-4 w-4 mr-2" /> Importar Excel
+            <FileSpreadsheet className="h-5 w-5 mr-2" /> Importar Excel
           </Button>
 
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button 
-                className="h-12 bg-slate-900 hover:bg-cyan-600 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl px-6 shadow-xl shadow-slate-200 transition-all border-none"
+                className="h-14 bg-slate-900 hover:bg-cyan-600 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl px-8 shadow-xl shadow-slate-200 transition-all border-none"
                 onClick={() => { setEditingClient(null); setPendingSale(null); }}
               >
-                 <PlusCircle className="h-4 w-4 mr-2" /> Nuevo Registro
+                 <PlusCircle className="h-5 w-5 mr-2" /> Nuevo Registro
               </Button>
             </DialogTrigger>
             
-            <DialogContent className="sm:max-w-[850px] p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
+            <DialogContent className="sm:max-w-[900px] p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
               <form onSubmit={handleSubmit}>
-                <div className="bg-slate-900 p-8 text-white relative">
+                <div className="bg-slate-900 p-10 text-white relative">
                   <DialogHeader>
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 mb-2">Expediente de Identidad</p>
-                    <DialogTitle className="text-3xl font-black tracking-tighter uppercase">
+                    <DialogTitle className="text-4xl font-black tracking-tighter uppercase">
                       {editingClient?.id ? `Editando: ${editingClient.name}` : "Registrar Nuevo Cliente"}
                     </DialogTitle>
-                    <DialogDescription className="text-slate-400 font-bold text-xs uppercase mt-2">
-                      {pendingSale ? `✨ Detectada venta automática de ${pendingSale.total}€` : "Verifique los datos antes de guardar el registro."}
+                    <DialogDescription className="text-slate-400 font-bold text-xs uppercase mt-3 flex items-center gap-2">
+                      {pendingSale ? (
+                        <span className="bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/20">
+                          ✨ Venta automática detectada: {pendingSale.total}€
+                        </span>
+                      ) : "Verifique la integridad de los datos legales antes de procesar."}
                     </DialogDescription>
                   </DialogHeader>
                 </div>
 
-                <div className="p-8 space-y-8 bg-white overflow-y-auto max-h-[70vh]">
+                <div className="p-10 space-y-10 bg-white overflow-y-auto max-h-[65vh]">
                   {ibanValue && ibanValue.length !== 24 && (
-                    <Alert className="bg-red-50 border-none rounded-2xl py-3 px-4">
-                      <AlertCircle className="h-4 w-4 text-red-500" />
-                      <AlertDescription className="text-[10px] font-black uppercase text-red-600 ml-2">
-                        IBAN Incorrecto: Faltan {24 - ibanValue.length} caracteres para alcanzar los 24 requeridos.
+                    <Alert className="bg-red-50 border-none rounded-2xl py-4 px-6 flex items-center">
+                      <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
+                      <AlertDescription className="text-[11px] font-black uppercase text-red-600">
+                        IBAN Incorrecto: Faltan {24 - ibanValue.length} caracteres para validar el estándar SEPA.
                       </AlertDescription>
                     </Alert>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* COLUMNA 1: PERSONALES */}
-                    <div className="space-y-4">
-                      <h4 className="text-[9px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-50 pb-2">
-                        <User size={12}/> Identidad Legal
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                    {/* COLUMNA 1: IDENTIDAD */}
+                    <div className="space-y-6">
+                      <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
+                        <Fingerprint size={14}/> Identidad Legal
                       </h4>
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <Label className="text-[9px] font-black text-slate-400 uppercase ml-1">Titular</Label>
-                          <Input name="name" defaultValue={editingClient?.name || ""} required className="bg-slate-50 border-none rounded-xl font-bold h-11" />
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Nombre Completo / Razón Social</Label>
+                          <Input name="name" defaultValue={editingClient?.name || ""} required className="bg-slate-50 border-none rounded-2xl font-bold h-12 focus:ring-2 ring-cyan-500/20" />
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-[9px] font-black text-slate-400 uppercase ml-1">DNI / NIE / CIF</Label>
-                          <Input name="dni" defaultValue={editingClient?.dni || ""} required className="bg-slate-50 border-none rounded-xl font-mono uppercase font-black text-cyan-600 h-11" />
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">DNI / NIE / CIF</Label>
+                          <Input name="dni" defaultValue={editingClient?.dni || ""} required className="bg-slate-50 border-none rounded-2xl font-mono uppercase font-black text-cyan-600 h-12 focus:ring-2 ring-cyan-500/20" />
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-1">
-                            <Label className="text-[9px] font-black text-slate-400 uppercase ml-1">Nacionalidad</Label>
-                            <Input name="nationality" defaultValue={editingClient?.nationality || ""} className="bg-slate-50 border-none rounded-xl text-xs font-bold h-11" />
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Nacionalidad</Label>
+                            <Input name="nationality" defaultValue={editingClient?.nationality || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
                           </div>
-                          <div className="space-y-1">
-                            <Label className="text-[9px] font-black text-slate-400 uppercase ml-1">Género</Label>
-                            <Input name="gender" defaultValue={editingClient?.gender || ""} className="bg-slate-50 border-none rounded-xl text-xs font-bold h-11" />
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Género</Label>
+                            <Input name="gender" defaultValue={editingClient?.gender || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* COLUMNA 2: CONTACTO */}
-                    <div className="space-y-4">
-                      <h4 className="text-[9px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-50 pb-2">
-                        <MapPin size={12}/> Ubicación y Contacto
+                    {/* COLUMNA 2: LOCALIZACIÓN */}
+                    <div className="space-y-6">
+                      <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
+                        <MapPin size={14}/> Ubicación y Contacto
                       </h4>
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <Label className="text-[9px] font-black text-slate-400 uppercase ml-1">Teléfono Principal</Label>
-                          <Input name="phone" defaultValue={editingClient?.phone || ""} required className="bg-slate-50 border-none rounded-xl font-bold h-11" />
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Teléfono Móvil</Label>
+                          <Input name="phone" defaultValue={editingClient?.phone || ""} required className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-[9px] font-black text-slate-400 uppercase ml-1">E-mail</Label>
-                          <Input name="email" type="email" defaultValue={editingClient?.email || ""} required className="bg-slate-50 border-none rounded-xl font-bold lowercase h-11" />
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">E-mail Corporativo</Label>
+                          <Input name="email" type="email" defaultValue={editingClient?.email || ""} required className="bg-slate-50 border-none rounded-2xl font-bold lowercase h-12" />
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-[9px] font-black text-slate-400 uppercase ml-1">Dirección Completa</Label>
-                          <Input name="address" defaultValue={editingClient?.address || ""} required className="bg-slate-50 border-none rounded-xl text-[11px] font-bold h-11" />
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Dirección Fiscal</Label>
+                          <Input name="address" defaultValue={editingClient?.address || ""} required className="bg-slate-50 border-none rounded-2xl text-[11px] font-bold h-12" />
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input name="city" placeholder="Ciudad" defaultValue={editingClient?.city || ""} className="bg-slate-50 border-none rounded-xl text-xs font-bold h-11" />
-                          <Input name="postalCode" placeholder="C.P." defaultValue={editingClient?.postalCode || ""} className="bg-slate-50 border-none rounded-xl text-xs font-bold h-11" />
+                        <div className="grid grid-cols-2 gap-3">
+                          <Input name="city" placeholder="Población" defaultValue={editingClient?.city || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
+                          <Input name="postalCode" placeholder="C.P." defaultValue={editingClient?.postalCode || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
                         </div>
                       </div>
                     </div>
 
-                    {/* COLUMNA 3: BANCO */}
-                    <div className="space-y-4">
-                      <h4 className="text-[9px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-50 pb-2">
-                        <CreditCard size={12}/> Datos de Pago
+                    {/* COLUMNA 3: FINANZAS */}
+                    <div className="space-y-6">
+                      <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
+                        <CreditCard size={14}/> Datos Bancarios
                       </h4>
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <Label className="text-[9px] font-black text-slate-400 uppercase ml-1">Operadora Actual</Label>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Operadora Origen</Label>
                           <Select value={operator} onValueChange={setOperator} required>
-                            <SelectTrigger className="bg-slate-50 border-none rounded-xl font-black uppercase text-[10px] h-11 focus:ring-0"><SelectValue placeholder="SELECCIONAR..." /></SelectTrigger>
-                            <SelectContent className="rounded-2xl border-none shadow-2xl">
-                              {OPERATOR_OPTIONS.map(op => <SelectItem key={op} value={op} className="font-bold text-[10px]">{op}</SelectItem>)}
+                            <SelectTrigger className="bg-slate-50 border-none rounded-2xl font-black uppercase text-[10px] h-12 focus:ring-0">
+                                <SelectValue placeholder="SELECCIONAR..." />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-3xl border-none shadow-2xl p-2">
+                              {OPERATOR_OPTIONS.map(op => <SelectItem key={op} value={op} className="font-bold text-[10px] rounded-xl">{op}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-[9px] font-black text-slate-400 uppercase ml-1">IBAN (24 Caracteres)</Label>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Número de Cuenta (IBAN)</Label>
                           <Input 
                             value={ibanValue} 
                             onChange={(e) => setIbanValue(e.target.value.replace(/\s/g, "").toUpperCase())}
                             required 
-                            className="bg-cyan-50 border-none rounded-xl font-mono text-[10px] font-black text-cyan-700 h-11"
+                            className="bg-cyan-50 border-none rounded-2xl font-mono text-[11px] font-black text-cyan-700 h-12"
                           />
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-[9px] font-black text-slate-400 uppercase ml-1">Observaciones</Label>
-                          <Textarea name="observations" defaultValue={editingClient?.observations || ""} className="bg-slate-50 border-none rounded-xl h-24 text-[10px] font-bold resize-none" />
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Notas del Expediente</Label>
+                          <Textarea name="observations" defaultValue={editingClient?.observations || ""} className="bg-slate-50 border-none rounded-2xl h-28 text-[11px] font-bold resize-none p-4" />
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <DialogFooter className="p-8 bg-slate-50 border-t border-slate-100">
+                <DialogFooter className="p-10 bg-slate-50 border-t border-slate-100">
                   <Button 
                     type="submit" 
-                    className="w-full h-14 bg-slate-900 hover:bg-cyan-600 text-white font-black rounded-2xl uppercase text-[10px] tracking-[0.2em] transition-all shadow-xl disabled:opacity-50" 
+                    className="w-full h-16 bg-slate-900 hover:bg-cyan-600 text-white font-black rounded-[1.5rem] uppercase text-xs tracking-[0.2em] transition-all shadow-2xl disabled:opacity-50" 
                     disabled={isSubmitting || (ibanValue.length > 0 && ibanValue.length !== 24)}
                   >
-                    {isSubmitting ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : editingClient?.id ? "Actualizar Expediente" : "Confirmar Alta de Cliente"}
+                    {isSubmitting ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : editingClient?.id ? "Actualizar Registro" : "Confirmar Alta en Cartera"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -340,27 +349,27 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      {/* TABLA REDONDEADA ESTILO DASHBOARD */}
-      <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-cyan-900/5 border-none overflow-hidden">
-        <div className="p-6">
-          <DataTable 
-            columns={columns(handleEdit)} 
-            data={data} 
-            filterInputPlaceholder="Filtrar por nombre o documento de identidad..." 
-          />
-        </div>
+      {/* CONTENEDOR DE TABLA */}
+      <div className="bg-white rounded-[3rem] shadow-2xl shadow-cyan-900/5 border-none overflow-hidden p-4">
+        <DataTable 
+          columns={columns(handleEdit)} 
+          data={data} 
+          filterInputPlaceholder="Filtrar por nombre o documento..." 
+        />
       </div>
 
-      {/* RESUMEN DE CARTERA */}
-      <div className="flex justify-center pb-10">
-        <div className="bg-white px-8 py-3 rounded-full shadow-lg shadow-cyan-900/5 flex items-center gap-4 border border-slate-50">
-          <div className="flex -space-x-2">
-            {[1,2,3].map(i => (
-              <div key={i} className="h-6 w-6 rounded-full bg-slate-200 border-2 border-white" />
+      {/* FOOTER STATS */}
+      <div className="flex justify-center pb-12">
+        <div className="bg-white px-10 py-4 rounded-full shadow-xl shadow-cyan-900/5 flex items-center gap-6 border border-slate-50">
+          <div className="flex -space-x-3">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="h-8 w-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center">
+                 <User size={12} className="text-slate-300"/>
+              </div>
             ))}
           </div>
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            Total en Cartera: <span className="text-cyan-600 text-sm ml-1">{data.length}</span>
+          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+            Total Clientes Activos: <span className="text-cyan-600 text-lg ml-2">{data.length}</span>
           </p>
         </div>
       </div>

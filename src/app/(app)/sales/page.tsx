@@ -3,8 +3,7 @@
 import * as React from "react"
 import { 
   Search, Printer, History, Calendar as CalendarIcon, 
-  User, ShieldCheck, X, FileText, MapPin, Phone, Mail, CreditCard,
-  RefreshCw, CheckCircle2, XCircle, Clock
+  User, ShieldCheck, X, FileText, MapPin, Phone, Mail, CreditCard 
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -16,20 +15,7 @@ import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-
-const STATUS_OPTIONS = [
-  { value: "Pendiente", label: "Pendiente", color: "bg-cyan-50 text-cyan-600", icon: Clock },
-  { value: "Tramitada", label: "Tramitada", color: "bg-emerald-50 text-emerald-600", icon: CheckCircle2 },
-  { value: "Cancelada", label: "Cancelada", color: "bg-red-50 text-red-600", icon: XCircle },
-]
 
 export default function SalesHistoryPage() {
   const [sales, setSales] = React.useState<any[]>([])
@@ -37,7 +23,6 @@ export default function SalesHistoryPage() {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined)
   const [selectedSale, setSelectedSale] = React.useState<any | null>(null)
   const [isModalOpen, setIsModalOpen] = React.useState(false)
-  const [isUpdating, setIsUpdating] = React.useState(false)
 
   const loadData = React.useCallback(async () => {
     try {
@@ -61,32 +46,6 @@ export default function SalesHistoryPage() {
   }, []);
 
   React.useEffect(() => { loadData() }, [loadData])
-
-  // FUNCIÓN PARA ACTUALIZAR STATUS
-  const updateSaleStatus = async (saleId: number, newStatus: string) => {
-    setIsUpdating(true);
-    try {
-      const res = await fetch(`/api2/sales/${saleId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      if (!res.ok) throw new Error();
-
-      toast.success(`Estado actualizado a ${newStatus}`);
-      
-      // Actualizar estado local
-      setSales(prev => prev.map(s => s.id === saleId ? { ...s, status: newStatus } : s));
-      if (selectedSale?.id === saleId) {
-        setSelectedSale((prev: any) => ({ ...prev, status: newStatus }));
-      }
-    } catch (e) {
-      toast.error("No se pudo actualizar el estado");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
 
   const filteredSales = React.useMemo(() => {
     return sales.filter(sale => {
@@ -145,7 +104,7 @@ export default function SalesHistoryPage() {
               <th className="px-8 py-5">Fecha</th>
               <th className="px-8 py-5">Cliente</th>
               <th className="px-8 py-5">Operadora</th>
-              <th className="px-8 py-5 text-center">Estado / Acción</th>
+              <th className="px-8 py-5 text-center">Estado</th>
               <th className="px-8 py-5 text-right">Importe</th>
               <th className="px-8 py-5 text-center">Ver</th>
             </tr>
@@ -159,31 +118,13 @@ export default function SalesHistoryPage() {
                     <div className="text-[10px] text-slate-400 font-medium">{sale.clienteDni}</div>
                 </td>
                 <td className="px-8 py-6 text-cyan-600 font-black uppercase">{sale.operadorDestino}</td>
-                <td className="px-8 py-6">
-                  <div className="flex justify-center">
-                    <Select 
-                      disabled={isUpdating}
-                      value={sale.status} 
-                      onValueChange={(val) => updateSaleStatus(sale.id, val)}
-                    >
-                      <SelectTrigger className={cn(
-                        "h-8 w-32 border-none font-black text-[9px] uppercase rounded-full shadow-sm transition-all px-3",
-                        STATUS_OPTIONS.find(opt => opt.value === sale.status)?.color
-                      )}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-none shadow-2xl font-black text-[10px] uppercase">
-                        {STATUS_OPTIONS.map(opt => (
-                          <SelectItem key={opt.value} value={opt.value} className="focus:bg-slate-100">
-                            <div className="flex items-center gap-2">
-                              <opt.icon size={12} />
-                              {opt.label}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <td className="px-8 py-6 text-center">
+                    <Badge className={cn("text-[8px] font-black px-3 py-1 rounded-full border-none shadow-sm",
+                      sale.status === 'Tramitada' ? 'bg-emerald-50 text-emerald-600' :
+                      sale.status === 'Cancelada' ? 'bg-red-50 text-red-600' : 'bg-cyan-50 text-cyan-600'
+                    )}>
+                      {sale.status}
+                    </Badge>
                 </td>
                 <td className="px-8 py-6 text-right font-black text-slate-900">{sale.precioCierre} €</td>
                 <td className="px-8 py-6 text-center">
@@ -197,9 +138,9 @@ export default function SalesHistoryPage() {
         </table>
       </div>
 
-      {/* MODAL DETALLE COMPLETO */}
+      {/* MODAL DETALLE COMPLETO (ESTILO PDF) */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-3xl p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl scale-95 md:scale-100">
+        <DialogContent className="max-w-3xl p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
           {/* Header del Expediente */}
           <div className="bg-slate-900 p-8 text-white relative">
             <div className="flex justify-between items-start">
@@ -208,33 +149,13 @@ export default function SalesHistoryPage() {
                 <DialogTitle className="text-3xl font-black tracking-tighter uppercase">ID CONTRATO: #{selectedSale?.id?.toString().padStart(5, '0')}</DialogTitle>
                 <p className="text-xs font-bold text-slate-400">Generado el {selectedSale?.dateObj && format(selectedSale.dateObj, "PPP", { locale: es })}</p>
               </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => window.print()} className="text-white hover:bg-white/10 rounded-xl border border-white/20 px-4">
-                  <Printer className="h-4 w-4 mr-2" /> IMPRIMIR
-                </Button>
-              </div>
+              <Button variant="ghost" onClick={() => window.print()} className="text-white hover:bg-white/10 rounded-xl border border-white/20 px-4">
+                <Printer className="h-4 w-4 mr-2" /> IMPRIMIR
+              </Button>
             </div>
-
-            {/* Selector de Estado dentro del Modal */}
-            <div className="mt-6 flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/10 w-fit">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2">Estado Actual:</p>
-              <Select 
-                value={selectedSale?.status} 
-                onValueChange={(val) => updateSaleStatus(selectedSale.id, val)}
-              >
-                <SelectTrigger className={cn(
-                  "h-9 w-40 border-none font-black text-[10px] uppercase rounded-xl shadow-lg transition-all",
-                  STATUS_OPTIONS.find(opt => opt.value === selectedSale?.status)?.color
-                )}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-none font-black uppercase">
-                  {STATUS_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Badge className="absolute bottom-8 right-8 bg-cyan-500 text-white font-black border-none px-6 py-2 text-xs rounded-full uppercase shadow-lg">
+              {selectedSale?.status}
+            </Badge>
           </div>
           
           <div className="p-10 space-y-10 bg-white overflow-y-auto max-h-[70vh]">
@@ -259,23 +180,23 @@ export default function SalesHistoryPage() {
                   <p className="text-sm font-black text-slate-800">{selectedSale?.clientFull?.email || "No registrado"}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><MapPin size={10}/> Provincia</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><MapPin size={10}/> Provincia / Región</p>
                   <p className="text-sm font-black text-slate-800">{selectedSale?.clientFull?.province || "No registrado"}</p>
                 </div>
                 <div className="space-y-1 md:col-span-2">
-                  <p className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><MapPin size={10}/> Dirección</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><MapPin size={10}/> Dirección de Suministro</p>
                   <p className="text-sm font-black text-slate-800">{selectedSale?.clientFull?.address || "No registrada"}</p>
                 </div>
                 <div className="space-y-1 md:col-span-1">
-                  <p className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><CreditCard size={10}/> IBAN</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><CreditCard size={10}/> Cuenta Bancaria (IBAN)</p>
                   <p className="text-xs font-mono font-black text-cyan-600 bg-cyan-50 px-2 py-1 rounded-md">
-                    {selectedSale?.clientFull?.iban || "Pendiente"}
+                    {selectedSale?.clientFull?.iban || "Pendiente de adjuntar"}
                   </p>
                 </div>
               </div>
             </section>
 
-            {/* BLOQUE 2: SERVICIOS */}
+            {/* BLOQUE 2: SERVICIOS Y OPERADOR */}
             <section className="space-y-4">
               <h3 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest border-b border-cyan-50 pb-2">Servicios y Tarifas</h3>
               <div className="border border-slate-100 rounded-3xl overflow-hidden">
