@@ -11,7 +11,7 @@ const dbConfig = {
 export async function GET() {
   try {
     const connection = await mysql.createConnection(dbConfig);
-    // Traemos todos los campos para que la tabla no tenga undefined
+    // Obtenemos todos los registros ordenados por el más reciente
     const [rows] = await connection.execute("SELECT * FROM products ORDER BY id DESC");
     await connection.end();
     return NextResponse.json(rows);
@@ -24,17 +24,28 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { 
-      name, price, category, operator, type, 
-      fiber, landline, mobile_main_gb, mobile_main_speed 
+      name, 
+      price, 
+      category, 
+      operator, 
+      type, 
+      fiber, 
+      landline, 
+      mobile_main_gb, 
+      mobile_main_speed,
+      extra_lines,        // Array de líneas adicionales
+      tv_package,         // Nombre del pack de TV
+      streaming_services  // Array de servicios (Netflix, HBO, etc.)
     } = body;
 
     const connection = await mysql.createConnection(dbConfig);
     
-    // IMPORTANTE: Asegúrate de que tu tabla 'products' tenga estas columnas
+    // Consulta extendida con los nuevos campos de TV y Streaming
     const query = `
       INSERT INTO products 
-      (name, price, category, operator, type, fiber, landline, mobile_main_gb, mobile_main_speed) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (name, price, category, operator, type, fiber, landline, 
+       mobile_main_gb, mobile_main_speed, extra_lines, tv_package, streaming_services) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     await connection.execute(query, [
@@ -46,11 +57,14 @@ export async function POST(req: Request) {
       fiber || null, 
       landline ? 1 : 0, 
       mobile_main_gb || null, 
-      mobile_main_speed || null
+      mobile_main_speed || null,
+      JSON.stringify(extra_lines || []),       // Guardar array como JSON string
+      tv_package || "SIN TV",
+      JSON.stringify(streaming_services || []) // Guardar array como JSON string
     ]);
 
     await connection.end();
-    return NextResponse.json({ message: "Producto guardado" });
+    return NextResponse.json({ message: "Producto guardado correctamente" });
   } catch (error: any) {
     console.error("Error en POST:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
