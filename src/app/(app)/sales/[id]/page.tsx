@@ -12,7 +12,6 @@ export default function SaleDetail() {
   const [sale, setSale] = React.useState<any>(null)
 
   React.useEffect(() => {
-    // Aquí cargarías la venta específica desde tu API
     fetch(`/api2/sales/${params.id}`)
       .then(res => res.json())
       .then(data => setSale(data))
@@ -37,7 +36,7 @@ export default function SaleDetail() {
           </Button>
         </CardHeader>
         <CardContent className="p-8 space-y-6">
-            {/* Aquí puedes diseñar la ficha completa con los datos que ya tienes */}
+            {}
             <div className="grid grid-cols-2 gap-8">
                 <div>
                     <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Cliente Titular</h4>
@@ -49,7 +48,7 @@ export default function SaleDetail() {
                     <p className="font-black text-sky-600 text-3xl">{sale.precioCierre}€</p>
                 </div>
             </div>
-            {/* ... más detalles ... */}
+            {}
         </CardContent>
       </Card>
     </div>

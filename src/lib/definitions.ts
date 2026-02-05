@@ -42,7 +42,7 @@ export type Sale = {
   operatorName: string;
   saleDate: string;
   amount: number;
-  status: "en proceso" | "instalación" | "completa"; 
+  status: "pendiente" | "en proceso" | "completa"; 
 };
 
 export type Venta = {
