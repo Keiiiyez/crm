@@ -11,6 +11,7 @@ export type Client = {
   postalCode: string;
   registrationDate: string;
   iban?: string;
+  nationality?: string;
   avatarUrl?: string;   
   new_operator?: string;  
   status?: "en proceso" | "instalación" | "completa"; 
