@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: 'CRM IVHAES',
-  description: 'A CRM for managing sales, clients, products, and operators.',
+  description: 'CRM para la gestión de clientes, productos y ventas de IVHAES.',
 };
 
 export default function RootLayout({
