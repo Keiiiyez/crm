@@ -4,7 +4,8 @@ import * as React from "react"
 import { 
   Search, Printer, History, Calendar as CalendarIcon, 
   User, ShieldCheck, X, FileText, MapPin, Phone, Mail, CreditCard,
-  CheckCircle2, XCircle, Clock, ChevronLeft, ChevronRight, Euro, Hash
+  CheckCircle2, XCircle, Clock, ChevronLeft, ChevronRight, Euro, Hash,
+  Zap, Tv, Smartphone
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -47,11 +48,12 @@ export default function SalesHistoryPage() {
       ]);
       
       const mergedSales = (resS || []).map((sale: any) => {
-        const clientData = (resC || []).find((c: any) => c.id.toString() === sale.clienteId?.toString());
+        const clientData = (resC || []).find((c: any) => c.id.toString() === sale.cliente_id?.toString());
         return { 
           ...sale, 
           clientFull: clientData,
-          dateObj: new Date(sale.createdAt || Date.now()) 
+          dni: clientData?.dni || sale.clienteDni, 
+          dateObj: new Date(sale.fecha || Date.now()) 
         };
       });
       setSales(mergedSales);
@@ -74,11 +76,11 @@ export default function SalesHistoryPage() {
 
       if (!res.ok) throw new Error();
 
-      if (newStatus === "Tramitada" && sale?.clienteId) {
-        await fetch(`/api/clients/${sale.clienteId}`, {
+      if (newStatus === "Tramitada" && sale?.cliente_id) {
+        await fetch(`/api/clients/${sale.cliente_id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ operator: sale.operadorDestino })
+          body: JSON.stringify({ operator: sale.operador_destino })
         });
         toast.success("Ficha del cliente actualizada");
       }
@@ -96,7 +98,7 @@ export default function SalesHistoryPage() {
     return sales.filter(sale => {
       const matchesText = 
         sale.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sale.clienteDni?.includes(searchTerm);
+        sale.dni?.includes(searchTerm);
       const matchesDate = !selectedDate ? true : 
         format(sale.dateObj, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
       return matchesText && matchesDate;
@@ -113,13 +115,13 @@ export default function SalesHistoryPage() {
             <History className="h-6 w-6 text-slate-800 transition-colors group-hover:text-cyan-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tighter text-slate-900 uppercase">
-              Historial <span className="text-slate-400 font-normal text-xl italic">Ventas</span>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
+              Historial <span className="text-slate-400 font-normal">Ventas</span>
             </h1>
             <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-0.5">Registro de operaciones</p>
           </div>
         </div>
-        <Badge variant="outline" className="bg-white px-4 py-1.5 rounded-lg border-none shadow-sm text-[9px] font-black uppercase tracking-widest text-cyan-600 animate-pulse">
+        <Badge variant="outline" className="bg-white px-4 py-1.5 rounded-lg border-none shadow-sm text-[9px] font-bold uppercase tracking-widest text-cyan-600 animate-pulse">
             {filteredSales.length} Operaciones
         </Badge>
       </div>
@@ -130,29 +132,29 @@ export default function SalesHistoryPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-cyan-500 transition-all z-10" />
           <Input 
             placeholder="Buscar por cliente o DNI..." 
-            className="h-12 pl-12 border-none shadow-[0_15px_30px_-15px_rgba(0,0,0,0.05)] rounded-xl bg-white font-bold text-slate-600 placeholder:font-medium text-xs transition-all focus:scale-[1.01]"
+            className="h-12 pl-12 border-none shadow-[0_15px_30px_-15px_rgba(0,0,0,0.05)] rounded-xl bg-white font-semibold text-slate-600 placeholder:font-medium text-xs transition-all focus:scale-[1.01]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="h-12 justify-start font-black border-none shadow-[0_15px_30px_-15px_rgba(0,0,0,0.05)] rounded-xl bg-white px-6 uppercase text-[9px] tracking-widest transition-all hover:translate-y-[-2px]">
+            <Button variant="outline" className="h-12 justify-start font-bold border-none shadow-[0_15px_30px_-15px_rgba(0,0,0,0.05)] rounded-xl bg-white px-6 uppercase text-[9px] tracking-widest transition-all hover:translate-y-[-2px]">
               <CalendarIcon className="mr-3 h-4 w-4 text-cyan-500" />
               {selectedDate ? format(selectedDate, "PPP", { locale: es }) : "Filtrar por Fecha"}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-2xl overflow-hidden animate-in fade-in zoom-in-95" align="end">
+          <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-2xl overflow-hidden" align="end">
             <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} locale={es} />
           </PopoverContent>
         </Popover>
       </div>
 
-      {/* TABLA FLOTANTE */}
+      {/* TABLA */}
       <div className="max-w-[1400px] mx-auto relative rounded-[2rem] bg-white border border-slate-50 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.08)] overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead className="bg-slate-50/40 border-b border-slate-100">
-            <tr className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400/80">
+            <tr className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400/80">
               <th className="px-8 py-6">Fecha</th>
               <th className="px-8 py-6">Cliente</th>
               <th className="px-8 py-6">Operadora</th>
@@ -167,28 +169,28 @@ export default function SalesHistoryPage() {
                 <td className="px-8 py-4 text-slate-400 font-mono text-[13px] tracking-tighter">
                     {format(sale.dateObj, 'dd/MM/yyyy')}
                 </td>
-                <td className="px-8 py-4 uppercase font-bold text-slate-700 text-[13px] tracking-tight transition-transform group-hover:translate-x-1">
+                <td className="px-8 py-4 uppercase font-bold text-slate-700 text-[13px] tracking-tight group-hover:translate-x-1 transition-transform">
                     {sale.clientName}
                 </td>
                 <td className="px-8 py-4">
-                    <span className="text-cyan-600 font-black uppercase text-[9px] tracking-[0.15em] bg-cyan-50/40 px-2 py-1 rounded-md">
-                        {sale.operadorDestino}
+                    <span className="text-cyan-600 font-bold uppercase text-[9px] tracking-widest bg-cyan-50/40 px-2 py-1 rounded-md">
+                        {sale.operador_destino || sale.operadorDestino}
                     </span>
                 </td>
                 <td className="px-8 py-4 text-center">
-                    <div className="flex justify-center transition-transform duration-300 group-hover:scale-105">
+                    <div className="flex justify-center">
                         <Select 
                           disabled={isUpdating}
                           value={sale.status} 
                           onValueChange={(val) => updateSaleStatus(sale.id, val)}
                         >
                           <SelectTrigger className={cn(
-                            "h-8 w-32 border-none font-black text-[8.5px] uppercase rounded-lg shadow-sm transition-all",
+                            "h-8 w-32 border-none font-bold text-[8.5px] uppercase rounded-lg shadow-sm transition-all",
                             STATUS_OPTIONS.find(opt => opt.value === sale.status)?.color
                           )}>
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="rounded-xl border-none shadow-2xl font-black text-[9px] uppercase p-2">
+                          <SelectContent className="rounded-xl border-none shadow-2xl font-bold text-[9px] uppercase p-2">
                             {STATUS_OPTIONS.map(opt => (
                               <SelectItem key={opt.value} value={opt.value} className="rounded-lg mb-1 last:mb-0">
                                 <div className="flex items-center gap-2">
@@ -202,8 +204,8 @@ export default function SalesHistoryPage() {
                     </div>
                 </td>
                 <td className="px-8 py-4 text-right">
-                    <div className="flex items-center justify-end gap-1 font-black text-slate-900 text-[13px] transition-all group-hover:text-cyan-600">
-                        {Number(sale.precioCierre).toFixed(2)} <span className="text-[10px] text-slate-300 font-normal">€</span>
+                    <div className="flex items-center justify-end gap-1 font-bold text-slate-900 text-[13px] group-hover:text-cyan-600 transition-colors">
+                        {Number(sale.precio_cierre || sale.precioCierre).toFixed(2)} <span className="text-[10px] text-slate-300 font-normal">€</span>
                     </div>
                 </td>
                 <td className="px-8 py-4 text-center">
@@ -212,47 +214,30 @@ export default function SalesHistoryPage() {
                       onClick={() => { setSelectedSale(sale); setIsModalOpen(true); }} 
                       className="h-10 w-10 p-0 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all text-slate-300 hover:text-cyan-600"
                     >
-                      <FileText className="h-4 w-4 transition-transform group-hover:rotate-12" />
+                      <FileText className="h-4 w-4" />
                     </Button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {filteredSales.length === 0 && (
-            <div className="p-20 text-center">
-                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-300">No se encontraron registros</p>
-            </div>
-        )}
-      </div>
-
-      {/* FOOTER */}
-      <div className="flex items-center justify-between px-8 max-w-[1400px] mx-auto">
-        <div className="text-[8.5px] font-bold uppercase tracking-[0.4em] text-slate-400">
-          Registros: <span className="text-cyan-600 font-black">{filteredSales.length}</span> unidades
-        </div>
-        <div className="flex gap-2">
-           <Button variant="ghost" className="h-8 w-8 p-0 rounded-lg bg-white shadow-sm hover:translate-x-[-2px] transition-all text-slate-400 hover:text-cyan-600"><ChevronLeft size={14}/></Button>
-           <Button variant="ghost" className="h-8 w-8 p-0 rounded-lg bg-white shadow-sm hover:translate-x-[2px] transition-all text-slate-400 hover:text-cyan-600"><ChevronRight size={14}/></Button>
-        </div>
       </div>
 
       {/* MODAL EXPEDIENTE COMPLETO */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-3xl p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl animate-in zoom-in-95 duration-300">
-          {/* Header del Modal */}
+        <DialogContent className="max-w-3xl p-0 rounded-[2rem] overflow-hidden border-none shadow-2xl animate-in zoom-in-95 duration-300">
           <div className="bg-slate-900 p-8 text-white relative">
             <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                 <ShieldCheck size={120} />
             </div>
             <div className="flex justify-between items-start relative z-10">
               <div className="space-y-1">
-                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-cyan-400">Expediente de Venta Oficial</p>
-                <DialogTitle className="text-3xl font-black tracking-tighter uppercase italic">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-400">Expediente de Venta Oficial</p>
+                <DialogTitle className="text-3xl font-bold tracking-tight uppercase">
                   REF-{selectedSale?.id?.toString().padStart(6, '0')}
                 </DialogTitle>
                 <div className="flex items-center gap-3 mt-2">
-                    <Badge className="bg-cyan-500/20 text-cyan-400 border-none text-[8px] uppercase font-black px-3 py-1">Digitalizado</Badge>
+                    <Badge className="bg-cyan-500/20 text-cyan-400 border-none text-[8px] uppercase font-bold px-3 py-1">Documento Digitalizado</Badge>
                     <div className="flex items-center gap-2 text-slate-400 font-bold text-[9px] uppercase tracking-widest">
                         <Clock size={12} /> {selectedSale && format(selectedSale.dateObj, "PPP 'a las' HH:mm", { locale: es })}
                     </div>
@@ -262,7 +247,7 @@ export default function SalesHistoryPage() {
                 <Button variant="ghost" onClick={() => window.print()} className="h-10 w-10 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all">
                     <Printer className="h-4 w-4" />
                 </Button>
-                <Button onClick={() => setIsModalOpen(false)} className="h-10 w-10 rounded-xl bg-white/10 hover:bg-rose-500 text-white transition-all hover:rotate-90">
+                <Button onClick={() => setIsModalOpen(false)} className="h-10 w-10 rounded-xl bg-white/10 hover:bg-rose-500 text-white transition-all">
                     <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -275,96 +260,137 @@ export default function SalesHistoryPage() {
             <section className="space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                 <User className="text-cyan-600" size={16}/>
-                <h3 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Información del Titular</h3>
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest">Información del Titular</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50/50 p-6 rounded-2xl border border-slate-100 shadow-inner">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
                 <div className="space-y-1">
-                  <p className="text-[8px] font-black text-slate-400 uppercase">Nombre Completo</p>
-                  <p className="text-[13px] font-black uppercase text-slate-700">{selectedSale?.clientName}</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase">Nombre Completo</p>
+                  <p className="text-sm font-bold uppercase text-slate-700">{selectedSale?.clientName}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[8px] font-black text-slate-400 uppercase">DNI / NIE</p>
-                  <p className="text-[13px] font-black text-cyan-700 font-mono">{selectedSale?.clienteDni}</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase">DNI / NIE</p>
+                  <p className="text-sm font-bold text-cyan-700 font-mono">{selectedSale?.dni}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[8px] font-black text-slate-400 uppercase">Teléfono de Contacto</p>
-                  <p className="text-[13px] font-bold text-slate-700">{selectedSale?.clientFull?.phone || "No disponible"}</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase">Teléfono</p>
+                  <p className="text-sm font-bold text-slate-700">{selectedSale?.clientFull?.phone || "No disponible"}</p>
                 </div>
                 <div className="md:col-span-3 space-y-1 pt-2 border-t border-slate-200/50">
-                  <p className="text-[8px] font-black text-slate-400 uppercase">Correo Electrónico</p>
-                  <p className="text-[13px] font-bold text-slate-600 lowercase">{selectedSale?.clientFull?.email || "Sin email registrado"}</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase">Correo Electrónico</p>
+                  <p className="text-sm font-bold text-slate-600 lowercase">{selectedSale?.clientFull?.email || "Sin email registrado"}</p>
                 </div>
               </div>
             </section>
 
-            {/* SECCIÓN 2: UBICACIÓN Y SUMINISTRO */}
+            {/* SECCIÓN 2: UBICACIÓN */}
             <section className="space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
                 <MapPin className="text-cyan-600" size={16}/>
-                <h3 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Punto de Suministro / Instalación</h3>
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest">Punto de Suministro</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/30 p-6 rounded-2xl border border-dashed border-slate-200">
                 <div className="space-y-1">
-                  <p className="text-[8px] font-black text-slate-400 uppercase">Dirección Principal</p>
-                  <p className="text-[13px] font-bold text-slate-600 italic">
-                    {selectedSale?.clientFull?.address || "Dirección no especificada"}
+                  <p className="text-[9px] font-bold text-slate-400 uppercase">Dirección</p>
+                  <p className="text-sm font-medium text-slate-600">
+                    {selectedSale?.clientFull?.address || "No especificada"}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <p className="text-[8px] font-black text-slate-400 uppercase">C. Postal</p>
-                        <p className="text-[13px] font-bold text-slate-600">{selectedSale?.clientFull?.postalCode || "---"}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">C. Postal</p>
+                        <p className="text-sm font-bold text-slate-600">{selectedSale?.clientFull?.postalCode || "---"}</p>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-[8px] font-black text-slate-400 uppercase">Localidad</p>
-                        <p className="text-[13px] font-bold text-slate-600">{selectedSale?.clientFull?.city || "---"}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">Localidad</p>
+                        <p className="text-sm font-bold text-slate-600">{selectedSale?.clientFull?.city || "---"}</p>
                     </div>
                 </div>
               </div>
             </section>
 
-            {/* SECCIÓN 3: SERVICIOS CONTRATADOS */}
-            <section className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <Hash className="text-cyan-600" size={16}/>
-                <h3 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Detalle del Contrato</h3>
-              </div>
-              <div className="space-y-2">
-                {selectedSale?.servicios && selectedSale.servicios.length > 0 ? (
-                    selectedSale.servicios.map((s: any, i: number) => (
-                        <div key={i} className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-100 shadow-sm transition-all hover:border-cyan-200">
-                            <div className="flex items-center gap-3">
-                                <div className="h-6 w-6 bg-cyan-50 rounded-md flex items-center justify-center text-cyan-600 text-[10px] font-black">
-                                    {i + 1}
-                                </div>
-                                <span className="font-bold text-slate-700 text-[11px] uppercase tracking-wide">{s.nombre}</span>
-                            </div>
-                            <span className="font-black text-slate-900 text-sm">{Number(s.precioBase).toFixed(2)} <small className="text-[10px] font-normal text-slate-400">€</small></span>
-                        </div>
-                    ))
-                ) : (
-                    <div className="text-center p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-400 text-[10px] font-bold uppercase">
-                        No hay desglose de servicios individuales
-                    </div>
-                )}
-              </div>
-            </section>
+           {/* SECCIÓN 3: DETALLE DEL CONTRATO */}
+<section className="space-y-4">
+  <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+    <Hash className="text-cyan-600" size={16}/>
+    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest">Detalle del Contrato</h3>
+  </div>
+  <div className="grid gap-4">
+    {selectedSale?.servicios?.map((s: any, i: number) => {
+      // Parsear JSONs que vienen de la tabla products
+      const parseSafe = (data: any) => {
+        if (!data) return [];
+        if (typeof data === 'string') {
+          try { return JSON.parse(data); } catch { return []; }
+        }
+        return data;
+      };
 
-            {/* FOOTER MODAL: TOTALES Y BANCO */}
+      const streaming = parseSafe(s.streaming_services);
+      const extras = parseSafe(s.extra_lines);
+
+      return (
+        <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="p-4 flex justify-between items-center bg-slate-50/50">
+            <div className="flex items-center gap-3">
+              <span className="h-6 w-6 bg-slate-900 text-white rounded text-[10px] flex items-center justify-center font-bold">{i + 1}</span>
+              <span className="font-bold text-slate-700 text-[11px] uppercase">{s.nombre}</span>
+            </div>
+            <span className="font-bold text-slate-900 text-sm">{Number(s.precioBase).toFixed(2)} €</span>
+          </div>
+          
+          <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-slate-100">
+            {s.fiber && (
+              <div className="space-y-1">
+                <p className="text-[8px] font-bold text-slate-400 uppercase">Fibra</p>
+                <p className="text-xs font-bold text-slate-600">{s.fiber} MB</p>
+              </div>
+            )}
+            {s.mobile_main_gb && (
+              <div className="space-y-1">
+                <p className="text-[8px] font-bold text-slate-400 uppercase">Móvil</p>
+                <p className="text-xs font-bold text-slate-600">{s.mobile_main_gb}</p>
+              </div>
+            )}
+            {s.tv_package && (
+              <div className="space-y-1">
+                <p className="text-[8px] font-bold text-slate-400 uppercase">Televisión</p>
+                <p className="text-xs font-bold text-slate-600">{s.tv_package}</p>
+              </div>
+            )}
+            
+            {/* Servicios Streaming */}
+            {streaming.length > 0 && (
+              <div className="col-span-2 space-y-1">
+                <p className="text-[8px] font-bold text-slate-400 uppercase">Streaming Incluido</p>
+                <div className="flex gap-1">
+                  {streaming.map((st: string) => (
+                    <span key={st} className="text-[9px] font-bold text-white bg-slate-800 px-2 py-0.5 rounded uppercase">{st}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+</section>
+
+            {/* FOOTER MODAL */}
             <div className="pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-slate-900 rounded-[1.5rem] p-6 text-white flex items-center justify-between group transition-all hover:bg-slate-800">
+                    <div className="bg-slate-900 rounded-[1.5rem] p-6 text-white flex items-center justify-between">
                         <div>
-                            <p className="text-[8px] font-black uppercase opacity-40 tracking-widest mb-1">Operadora Destino</p>
-                            <p className="text-xl font-black text-cyan-400 uppercase italic tracking-tighter">{selectedSale?.operadorDestino}</p>
+                            <p className="text-[9px] font-bold uppercase opacity-40 tracking-widest mb-1">Operadora Destino</p>
+                            <p className="text-xl font-bold text-cyan-400 uppercase tracking-tighter">{selectedSale?.operador_destino || selectedSale?.operadorDestino}</p>
                         </div>
-                        <ShieldCheck className="opacity-20 group-hover:scale-110 transition-transform" size={40} />
+                        <ShieldCheck className="opacity-20" size={40} />
                     </div>
                     <div className="bg-cyan-600 rounded-[1.5rem] p-6 text-white flex items-center justify-between shadow-xl shadow-cyan-600/20">
                         <div>
-                            <p className="text-[8px] font-black uppercase opacity-60 tracking-widest mb-1">Importe Total Cierre</p>
-                            <div className="text-3xl font-black italic tracking-tighter">
-                                {Number(selectedSale?.precioCierre).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €
+                            <p className="text-[9px] font-bold uppercase opacity-60 tracking-widest mb-1">Importe Cierre</p>
+                            <div className="text-3xl font-bold tracking-tighter">
+                                {Number(selectedSale?.precio_cierre || selectedSale?.precioCierre).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €
                             </div>
                         </div>
                         <CreditCard className="opacity-30" size={40} />
@@ -373,9 +399,9 @@ export default function SalesHistoryPage() {
 
                 <Button 
                     onClick={() => setIsModalOpen(false)} 
-                    className="w-full mt-8 h-14 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-900 font-black rounded-2xl uppercase text-[9px] tracking-[0.3em] transition-all"
+                    className="w-full mt-8 h-14 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-900 font-bold rounded-2xl uppercase text-[10px] tracking-widest transition-all"
                 >
-                  Archivar Expediente Digital
+                  Cerrar Expediente
                 </Button>
             </div>
           </div>
