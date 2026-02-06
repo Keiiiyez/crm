@@ -34,7 +34,6 @@ const formSchema = z.object({
   observaciones: z.string().optional(),
 })
 
-// Componente auxiliar para la info con el fix de TS
 function InfoItem({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
   return (
     <div className="space-y-1.5 p-3 rounded-2xl border border-sky-50 bg-sky-50/30">
@@ -109,11 +108,11 @@ export function SalesForm() {
         body: JSON.stringify(values),
       });
       if (!response.ok) throw new Error();
-      toast.success("Venta procesada");
+      toast.success("Venta registrada con éxito");
       form.reset();
       setSelectedClient(null);
     } catch (error) {
-      toast.error("Error al registrar");
+      toast.error("Error al registrar la venta");
     }
   };
 
@@ -121,7 +120,7 @@ export function SalesForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6">
         
-        {/* BUSCADOR REDONDEADO */}
+        {}
         <Card className="border border-sky-100 rounded-[2rem] shadow-sm">
           <CardContent className="pt-6">
             <Popover open={openSearch} onOpenChange={setOpenSearch}>
@@ -168,7 +167,7 @@ export function SalesForm() {
         {selectedClient && (
           <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
             
-            {/* INFO CLIENTE REDONDEADA Y COMPLETA */}
+            {}
             <Card className="border border-sky-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden">
               <div className="bg-sky-50/50 px-8 py-4 border-b border-sky-100 flex justify-between items-center">
                 <h3 className="text-sm font-bold text-sky-800 uppercase flex items-center gap-2">
@@ -185,8 +184,8 @@ export function SalesForm() {
                   <InfoItem icon={<Phone />} label="Teléfono" value={selectedClient.phone} />
                   <InfoItem icon={<Mail />} label="Email" value={selectedClient.email} />
                   <InfoItem icon={<MapPin />} label="Dirección" value={selectedClient.address} />
-                  <InfoItem icon={<Globe />} label="Población / Prov" value={`${selectedClient.city}, ${selectedClient.province}`} />
-                  <InfoItem icon={<Landmark />} label="Cuenta IBAN" value={selectedClient.iban} />
+                  <InfoItem icon={<Globe />} label="Provincia" value={`${selectedClient.city}, ${selectedClient.province}`} />
+                  <InfoItem icon={<Landmark />} label="IBAN" value={selectedClient.iban} />
                   <InfoItem icon={<Calendar />} label="F. Nacimiento" value={selectedClient.birthDate} />
                   <InfoItem icon={<Globe />} label="Nacionalidad" value={selectedClient.nationality} />
                   <InfoItem icon={<Building2 />} label="Operador Actual" value={selectedClient.operator} />
@@ -196,14 +195,14 @@ export function SalesForm() {
               </CardContent>
             </Card>
 
-            {/* SERVICIOS REDONDEADOS */}
+            {}
             <Card className="border border-sky-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden">
               <div className="p-8 pb-0 flex justify-between items-center">
                 <h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm tracking-widest">
                   <Receipt className="h-5 w-5 text-sky-400" /> Configuración de Venta
                 </h3>
                 <Button type="button" onClick={() => append({ nombre: "", precioBase: 0 })} className="bg-sky-50 text-sky-600 hover:bg-sky-100 border border-sky-100 rounded-xl px-6">
-                  <Plus className="h-4 w-4 mr-1" /> Añadir Línea
+                  <Plus className="h-4 w-4 mr-1" /> Añadir Servicio
                 </Button>
               </div>
 
@@ -270,7 +269,7 @@ export function SalesForm() {
                     </div>
                   </div>
 
-                  {/* PRECIO FINAL: AJUSTE DE COLOR Y DISEÑO */}
+                  {}
                   <div className="flex flex-col gap-4">
                     <div className="bg-sky-50/80 border border-sky-100 p-8 rounded-[2.5rem] flex justify-between items-center">
                       <div>
@@ -287,7 +286,7 @@ export function SalesForm() {
                     </div>
                     
                     <Button type="submit" className="w-full h-16 text-lg font-bold rounded-2xl bg-sky-600 hover:bg-sky-700 shadow-xl shadow-sky-200 transition-all hover:scale-[1.01] active:scale-[0.98]">
-                      REGISTRAR VENTA FINAL
+                      REGISTRAR VENTA
                     </Button>
                   </div>
                 </div>

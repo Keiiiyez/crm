@@ -188,7 +188,7 @@ export const columns = (
                     toast.success("IBAN copiado");
                 }}
             >
-              <Building2 className="h-4 w-4 opacity-70" /> Copiar IBAN
+              <Building2 className="h-4 w-4 opacity-70" /> Copiar datos
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-slate-100 my-1 mx-2" />
             <DropdownMenuItem 

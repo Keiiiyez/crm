@@ -27,7 +27,7 @@ const navLinks = [
   },
   { href: "/clients", icon: Users, label: "Clientes" },
   { href: "/products", icon: Package, label: "Servicios" },
-  { href: "/operators", icon: UserCog, label: "Operadores" },
+  { href: "/inform", icon: UserCog, label: "Informes" },
 ]
 
 export function AppNav({ isMobile }: AppNavProps) {

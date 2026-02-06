@@ -9,13 +9,7 @@ import {
   User, 
   MapPin, 
   CreditCard, 
-  Search, 
-  X,
-  Phone,
-  Mail,
-  Fingerprint,
-  Globe,
-  Briefcase
+  Fingerprint
 } from "lucide-react"
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
@@ -189,7 +183,6 @@ export default function ClientsPage() {
   return (
     <div className="space-y-8 p-8 bg-slate-50/50 min-h-screen text-slate-900">
       
-      {}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 px-2">
         <div>
           <h1 className="text-3xl font-black tracking-tighter text-slate-800 flex items-center gap-3 uppercase">
@@ -247,7 +240,6 @@ export default function ClientsPage() {
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
                         <Fingerprint size={14}/> Identidad Legal
@@ -274,7 +266,6 @@ export default function ClientsPage() {
                       </div>
                     </div>
 
-                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
                         <MapPin size={14}/> Ubicación y Contacto
@@ -299,7 +290,6 @@ export default function ClientsPage() {
                       </div>
                     </div>
 
-                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
                         <CreditCard size={14}/> Datos Bancarios
@@ -350,29 +340,15 @@ export default function ClientsPage() {
       </div>
 
       {}
-      <div className="bg-white rounded-[3rem] shadow-2xl shadow-cyan-900/5 border-none overflow-hidden p-4">
+      <div className="overflow-hidden p-4">
         <DataTable 
           columns={columns(handleEdit)} 
           data={data} 
-          filterInputPlaceholder="Filtrar por nombre o documento..." 
+          filterInputPlaceholder="Filtrar por nombre o documento de identidad..." 
         />
       </div>
 
       {}
-      <div className="flex justify-center pb-12">
-        <div className="bg-white px-10 py-4 rounded-full shadow-xl shadow-cyan-900/5 flex items-center gap-6 border border-slate-50">
-          <div className="flex -space-x-3">
-            {[1,2,3,4].map(i => (
-              <div key={i} className="h-8 w-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center">
-                 <User size={12} className="text-slate-300"/>
-              </div>
-            ))}
-          </div>
-          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
-            Total Clientes Activos: <span className="text-cyan-600 text-lg ml-2">{data.length}</span>
-          </p>
-        </div>
-      </div>
     </div>
   )
 }
