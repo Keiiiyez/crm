@@ -7,7 +7,7 @@ import * as z from "zod"
 import { 
   Search, ChevronsUpDown, Plus, Trash2, Phone, MapPin, CreditCard, Mail, 
   User, Globe, FileText, CheckCircle2, Receipt, Info, Building2, Landmark, 
-  Calendar, UserCircle 
+  Calendar, UserCircle, Calculator
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -87,18 +87,39 @@ export function SalesForm() {
 
   const watchServicios = form.watch("servicios");
   
-  const currentTotal = React.useMemo(() => {
+  // --- LÓGICA FISCAL COMPLETA ---
+  const fiscalCalculation = React.useMemo(() => {
     const subtotal = watchServicios.reduce((acc, curr) => acc + (Number(curr.precioBase) || 0), 0);
-    const prov = (selectedClient?.province || "").toLowerCase();
+    const prov = (selectedClient?.province || "").toLowerCase().trim();
+    
     let taxRate = 0.21;
-    if (prov.includes("canarias") || prov.includes("palmas") || prov.includes("tenerife")) taxRate = 0.07;
-    else if (prov.includes("ceuta") || prov.includes("melilla")) taxRate = 0.005;
-    return Number((subtotal * (1 + taxRate)).toFixed(2));
+    let taxName = "IVA";
+
+    // Detección mejorada
+    if (prov.includes("canarias") || prov.includes("palmas") || prov.includes("tenerife")) {
+      taxRate = 0.07;
+      taxName = "IGIC";
+    } else if (prov.includes("ceuta") || prov.includes("melilla")) {
+      taxRate = 0.04;
+      taxName = "IPSI";
+    }
+
+    const taxAmount = subtotal * taxRate;
+    const total = Number((subtotal + taxAmount).toFixed(2));
+
+    return { 
+      subtotal, 
+      taxAmount, 
+      total, 
+      taxName, 
+      taxPercentage: taxRate * 100 
+    };
   }, [watchServicios, selectedClient]);
 
+  // Sincronizar el total con el campo del formulario
   React.useEffect(() => {
-    form.setValue("precioCierre", currentTotal);
-  }, [currentTotal, form]);
+    form.setValue("precioCierre", fiscalCalculation.total);
+  }, [fiscalCalculation.total, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -120,7 +141,7 @@ export function SalesForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6">
         
-        {}
+        {/* BUSCADOR DE CLIENTE */}
         <Card className="border border-sky-100 rounded-[2rem] shadow-sm">
           <CardContent className="pt-6">
             <Popover open={openSearch} onOpenChange={setOpenSearch}>
@@ -167,7 +188,7 @@ export function SalesForm() {
         {selectedClient && (
           <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
             
-            {}
+            {/* INFO CLIENTE */}
             <Card className="border border-sky-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden">
               <div className="bg-sky-50/50 px-8 py-4 border-b border-sky-100 flex justify-between items-center">
                 <h3 className="text-sm font-bold text-sky-800 uppercase flex items-center gap-2">
@@ -184,18 +205,14 @@ export function SalesForm() {
                   <InfoItem icon={<Phone />} label="Teléfono" value={selectedClient.phone} />
                   <InfoItem icon={<Mail />} label="Email" value={selectedClient.email} />
                   <InfoItem icon={<MapPin />} label="Dirección" value={selectedClient.address} />
-                  <InfoItem icon={<Globe />} label="Provincia" value={`${selectedClient.city}, ${selectedClient.province}`} />
+                  <InfoItem icon={<Globe />} label="Ubicación" value={`${selectedClient.city}, ${selectedClient.province}`} />
                   <InfoItem icon={<Landmark />} label="IBAN" value={selectedClient.iban} />
-                  <InfoItem icon={<Calendar />} label="F. Nacimiento" value={selectedClient.birthDate} />
-                  <InfoItem icon={<Globe />} label="Nacionalidad" value={selectedClient.nationality} />
                   <InfoItem icon={<Building2 />} label="Operador Actual" value={selectedClient.operator} />
-                  <InfoItem icon={<UserCircle />} label="Género" value={selectedClient.gender} />
-                  <InfoItem icon={<Landmark />} label="Entidad Bancaria" value={selectedClient.bankName} />
                 </div>
               </CardContent>
             </Card>
 
-            {}
+            {/* CONFIGURACIÓN DE VENTA */}
             <Card className="border border-sky-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden">
               <div className="p-8 pb-0 flex justify-between items-center">
                 <h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm tracking-widest">
@@ -232,10 +249,10 @@ export function SalesForm() {
                       </div>
                       
                       <div className="col-span-9 md:col-span-3 space-y-2">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase text-right mr-1">Base</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase text-right mr-1">Base Imponible</p>
                         <div className="relative">
                           <Input type="number" step="0.01" {...form.register(`servicios.${index}.precioBase`)} className="bg-white border-slate-200 rounded-xl h-11 font-bold text-right pr-8" />
-                          <span className="absolute right-3 top-3 text-slate-400 text-xs text-muted-foreground italic">€</span>
+                          <span className="absolute right-3 top-3 text-slate-400 text-xs italic">€</span>
                         </div>
                       </div>
 
@@ -269,25 +286,49 @@ export function SalesForm() {
                     </div>
                   </div>
 
-                  {}
+                  {/* SECCIÓN DE TOTALES CON DESGLOSE FISCAL */}
                   <div className="flex flex-col gap-4">
-                    <div className="bg-sky-50/80 border border-sky-100 p-8 rounded-[2.5rem] flex justify-between items-center">
-                      <div>
-                        <p className="text-xs font-bold uppercase text-sky-400 tracking-widest mb-2">Total Presupuestado</p>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-6xl font-black text-sky-950 tracking-tighter">{currentTotal}</span>
-                          <span className="text-2xl font-bold text-sky-500">€</span>
-                        </div>
-                        <p className="text-[10px] text-sky-400 mt-2 font-medium">IVA/Impuestos calculados según provincia</p>
+                    <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-8 opacity-10">
+                        <Calculator size={80} />
                       </div>
-                      <div className="h-20 w-20 bg-white rounded-[1.5rem] flex items-center justify-center shadow-sm border border-sky-50">
-                         <CheckCircle2 className="h-10 w-10 text-sky-500" />
+                      
+                      <div className="space-y-4 relative z-10">
+                        <div className="flex justify-between items-center text-slate-400">
+                          <span className="text-[10px] font-black uppercase tracking-widest">Base Imponible</span>
+                          <span className="font-mono">{fiscalCalculation.subtotal.toFixed(2)} €</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center text-sky-400">
+                          <span className="text-[10px] font-black uppercase tracking-widest">
+                            {fiscalCalculation.taxName} ({fiscalCalculation.taxPercentage}%)
+                          </span>
+                          <span className="font-mono">+{fiscalCalculation.taxAmount.toFixed(2)} €</span>
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-800 flex justify-between items-end">
+                          <div>
+                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Total Final</p>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-5xl font-black text-white tracking-tighter">
+                                {fiscalCalculation.total.toFixed(2)}
+                              </span>
+                              <span className="text-xl font-bold text-sky-500">€</span>
+                            </div>
+                          </div>
+                          <Badge className="bg-sky-500 text-white border-none text-[9px] font-black px-3 py-1 mb-2">
+                            ZONA {selectedClient?.province?.toUpperCase()}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                     
                     <Button type="submit" className="w-full h-16 text-lg font-bold rounded-2xl bg-sky-600 hover:bg-sky-700 shadow-xl shadow-sky-200 transition-all hover:scale-[1.01] active:scale-[0.98]">
                       REGISTRAR VENTA
                     </Button>
+                    <p className="text-center text-[10px] text-slate-400 font-medium">
+                      Confirmar que los datos del cliente y provincia son correctos antes de registrar.
+                    </p>
                   </div>
                 </div>
               </CardContent>

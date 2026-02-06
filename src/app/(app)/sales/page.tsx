@@ -4,7 +4,7 @@ import * as React from "react"
 import { 
   Search, Printer, History, Calendar as CalendarIcon, 
   User, ShieldCheck, X, FileText, MapPin, Phone, Mail, CreditCard,
-  CheckCircle2, XCircle, Clock
+  CheckCircle2, XCircle, Clock, ChevronLeft, ChevronRight, Euro, Hash
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -26,9 +26,9 @@ import {
 import { cn } from "@/lib/utils"
 
 const STATUS_OPTIONS = [
-  { value: "Pendiente", label: "Pendiente", color: "bg-cyan-50 text-cyan-600", icon: Clock },
-  { value: "Tramitada", label: "Tramitada", color: "bg-emerald-50 text-emerald-600", icon: CheckCircle2 },
-  { value: "Cancelada", label: "Cancelada", color: "bg-red-50 text-red-600", icon: XCircle },
+  { value: "Pendiente", label: "Pendiente", color: "bg-amber-50 text-amber-600 border-amber-100", icon: Clock },
+  { value: "Tramitada", label: "Tramitada", color: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: CheckCircle2 },
+  { value: "Cancelada", label: "Cancelada", color: "bg-rose-50 text-rose-600 border-rose-100", icon: XCircle },
 ]
 
 export default function SalesHistoryPage() {
@@ -66,8 +66,6 @@ export default function SalesHistoryPage() {
     setIsUpdating(true);
     try {
       const sale = sales.find(s => s.id === saleId);
-      
-      // 1. Actualizar Status de la Venta
       const res = await fetch(`/api2/sales/${saleId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -76,7 +74,6 @@ export default function SalesHistoryPage() {
 
       if (!res.ok) throw new Error();
 
-      // 2. Si es TRAMITADA, actualizar operadora en la ficha del cliente
       if (newStatus === "Tramitada" && sale?.clienteId) {
         await fetch(`/api/clients/${sale.clienteId}`, {
           method: 'PATCH',
@@ -87,7 +84,7 @@ export default function SalesHistoryPage() {
       }
 
       toast.success(`Estado: ${newStatus}`);
-      loadData(); // Recargar datos
+      loadData();
     } catch (e) {
       toast.error("Error al actualizar");
     } finally {
@@ -107,172 +104,280 @@ export default function SalesHistoryPage() {
   }, [sales, searchTerm, selectedDate]);
 
   return (
-    <div className="space-y-8 p-8 bg-slate-50/50 min-h-screen text-slate-900">
+    <div className="min-h-screen bg-slate-50/50 p-6 lg:p-10 space-y-8 selection:bg-cyan-100 selection:text-cyan-900">
       
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-black tracking-tighter text-slate-800 flex items-center gap-3">
-            <History className="h-8 w-8 text-cyan-500" /> Ventas
-          </h1>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Historial y estados.</p>
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6 max-w-[1400px] mx-auto">
+        <div className="flex items-center gap-4 group cursor-default">
+          <div className="h-12 w-12 bg-white rounded-xl shadow-[0_8px_20px_-10px_rgba(0,0,0,0.1)] flex items-center justify-center transition-all duration-500 group-hover:rotate-[360deg]">
+            <History className="h-6 w-6 text-slate-800 transition-colors group-hover:text-cyan-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black tracking-tighter text-slate-900 uppercase">
+              Historial <span className="text-slate-400 font-normal text-xl italic">Ventas</span>
+            </h1>
+            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-0.5">Registro de operaciones</p>
+          </div>
         </div>
+        <Badge variant="outline" className="bg-white px-4 py-1.5 rounded-lg border-none shadow-sm text-[9px] font-black uppercase tracking-widest text-cyan-600 animate-pulse">
+            {filteredSales.length} Operaciones
+        </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 relative group">
-          <Search className="absolute left-4 top-4 h-5 w-5 text-cyan-500" />
+      {/* CONTROLES */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-[1400px] mx-auto">
+        <div className="md:col-span-3 relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-cyan-500 transition-all z-10" />
           <Input 
-            placeholder="Buscar cliente o DNI..." 
-            className="h-14 pl-12 border-none shadow-xl rounded-2xl bg-white font-bold"
+            placeholder="Buscar por cliente o DNI..." 
+            className="h-12 pl-12 border-none shadow-[0_15px_30px_-15px_rgba(0,0,0,0.05)] rounded-xl bg-white font-bold text-slate-600 placeholder:font-medium text-xs transition-all focus:scale-[1.01]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="h-14 justify-start font-bold border-none shadow-xl rounded-2xl bg-white px-6">
-              <CalendarIcon className="mr-2 h-5 w-5 text-cyan-500" />
-              {selectedDate ? format(selectedDate, "PPP", { locale: es }) : "Fecha"}
+            <Button variant="outline" className="h-12 justify-start font-black border-none shadow-[0_15px_30px_-15px_rgba(0,0,0,0.05)] rounded-xl bg-white px-6 uppercase text-[9px] tracking-widest transition-all hover:translate-y-[-2px]">
+              <CalendarIcon className="mr-3 h-4 w-4 text-cyan-500" />
+              {selectedDate ? format(selectedDate, "PPP", { locale: es }) : "Filtrar por Fecha"}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-2xl">
+          <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-2xl overflow-hidden animate-in fade-in zoom-in-95" align="end">
             <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} locale={es} />
           </PopoverContent>
         </Popover>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] shadow-2xl border-none overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-slate-50/50 text-[9px] font-black uppercase text-slate-400">
-            <tr>
-              <th className="px-8 py-5">Fecha</th>
-              <th className="px-8 py-5">Cliente</th>
-              <th className="px-8 py-5">Operadora</th>
-              <th className="px-8 py-5 text-center">Estado</th>
-              <th className="px-8 py-5 text-right">Importe</th>
-              <th className="px-8 py-5 text-center">Ver</th>
+      {/* TABLA FLOTANTE */}
+      <div className="max-w-[1400px] mx-auto relative rounded-[2rem] bg-white border border-slate-50 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.08)] overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-slate-50/40 border-b border-slate-100">
+            <tr className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400/80">
+              <th className="px-8 py-6">Fecha</th>
+              <th className="px-8 py-6">Cliente</th>
+              <th className="px-8 py-6">Operadora</th>
+              <th className="px-8 py-6 text-center">Estado</th>
+              <th className="px-8 py-6 text-right">Importe</th>
+              <th className="px-8 py-6 text-center">Detalles</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {filteredSales.map((sale: any) => (
-              <tr key={sale.id} className="hover:bg-cyan-50/10 transition-colors font-bold text-xs text-slate-700">
-                <td className="px-8 py-6">{format(sale.dateObj, 'dd/MM/yyyy')}</td>
-                <td className="px-8 py-6 uppercase">{sale.clientName}</td>
-                <td className="px-8 py-6 text-cyan-600 font-black uppercase">{sale.operadorDestino}</td>
-                <td className="px-8 py-6">
-                   <div className="flex justify-center">
-                    <Select 
-                      disabled={isUpdating}
-                      value={sale.status} 
-                      onValueChange={(val) => updateSaleStatus(sale.id, val)}
-                    >
-                      <SelectTrigger className={cn(
-                        "h-8 w-32 border-none font-black text-[9px] uppercase rounded-full shadow-sm",
-                        STATUS_OPTIONS.find(opt => opt.value === sale.status)?.color
-                      )}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-none font-black text-[10px] uppercase">
-                        {STATUS_OPTIONS.map(opt => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            <div className="flex items-center gap-2">
-                              <opt.icon size={12} />
-                              {opt.label}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                   </div>
+              <tr key={sale.id} className="group hover:bg-slate-50/30 transition-all duration-300">
+                <td className="px-8 py-4 text-slate-400 font-mono text-[13px] tracking-tighter">
+                    {format(sale.dateObj, 'dd/MM/yyyy')}
                 </td>
-                <td className="px-8 py-6 text-right font-black text-slate-900">{sale.precioCierre} €</td>
-                <td className="px-8 py-6 text-center">
-                    <Button variant="ghost" onClick={() => { setSelectedSale(sale); setIsModalOpen(true); }} className="h-9 w-9 p-0 rounded-xl">
-                      <FileText className="h-4 w-4 text-slate-400" />
+                <td className="px-8 py-4 uppercase font-bold text-slate-700 text-[13px] tracking-tight transition-transform group-hover:translate-x-1">
+                    {sale.clientName}
+                </td>
+                <td className="px-8 py-4">
+                    <span className="text-cyan-600 font-black uppercase text-[9px] tracking-[0.15em] bg-cyan-50/40 px-2 py-1 rounded-md">
+                        {sale.operadorDestino}
+                    </span>
+                </td>
+                <td className="px-8 py-4 text-center">
+                    <div className="flex justify-center transition-transform duration-300 group-hover:scale-105">
+                        <Select 
+                          disabled={isUpdating}
+                          value={sale.status} 
+                          onValueChange={(val) => updateSaleStatus(sale.id, val)}
+                        >
+                          <SelectTrigger className={cn(
+                            "h-8 w-32 border-none font-black text-[8.5px] uppercase rounded-lg shadow-sm transition-all",
+                            STATUS_OPTIONS.find(opt => opt.value === sale.status)?.color
+                          )}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl border-none shadow-2xl font-black text-[9px] uppercase p-2">
+                            {STATUS_OPTIONS.map(opt => (
+                              <SelectItem key={opt.value} value={opt.value} className="rounded-lg mb-1 last:mb-0">
+                                <div className="flex items-center gap-2">
+                                  <opt.icon size={12} className="opacity-70" />
+                                  {opt.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                    </div>
+                </td>
+                <td className="px-8 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1 font-black text-slate-900 text-[13px] transition-all group-hover:text-cyan-600">
+                        {Number(sale.precioCierre).toFixed(2)} <span className="text-[10px] text-slate-300 font-normal">€</span>
+                    </div>
+                </td>
+                <td className="px-8 py-4 text-center">
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => { setSelectedSale(sale); setIsModalOpen(true); }} 
+                      className="h-10 w-10 p-0 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all text-slate-300 hover:text-cyan-600"
+                    >
+                      <FileText className="h-4 w-4 transition-transform group-hover:rotate-12" />
                     </Button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {filteredSales.length === 0 && (
+            <div className="p-20 text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-300">No se encontraron registros</p>
+            </div>
+        )}
       </div>
 
+      {/* FOOTER */}
+      <div className="flex items-center justify-between px-8 max-w-[1400px] mx-auto">
+        <div className="text-[8.5px] font-bold uppercase tracking-[0.4em] text-slate-400">
+          Registros: <span className="text-cyan-600 font-black">{filteredSales.length}</span> unidades
+        </div>
+        <div className="flex gap-2">
+           <Button variant="ghost" className="h-8 w-8 p-0 rounded-lg bg-white shadow-sm hover:translate-x-[-2px] transition-all text-slate-400 hover:text-cyan-600"><ChevronLeft size={14}/></Button>
+           <Button variant="ghost" className="h-8 w-8 p-0 rounded-lg bg-white shadow-sm hover:translate-x-[2px] transition-all text-slate-400 hover:text-cyan-600"><ChevronRight size={14}/></Button>
+        </div>
+      </div>
+
+      {/* MODAL EXPEDIENTE COMPLETO */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-3xl p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
+        <DialogContent className="max-w-3xl p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl animate-in zoom-in-95 duration-300">
+          {/* Header del Modal */}
           <div className="bg-slate-900 p-8 text-white relative">
-            <div className="flex justify-between items-start">
+            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                <ShieldCheck size={120} />
+            </div>
+            <div className="flex justify-between items-start relative z-10">
               <div className="space-y-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">Contrato generado</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.4em] text-cyan-400">Expediente de Venta Oficial</p>
                 <DialogTitle className="text-3xl font-black tracking-tighter uppercase italic">
-                  ID: #{selectedSale?.id?.toString().padStart(5, '0')}
+                  REF-{selectedSale?.id?.toString().padStart(6, '0')}
                 </DialogTitle>
+                <div className="flex items-center gap-3 mt-2">
+                    <Badge className="bg-cyan-500/20 text-cyan-400 border-none text-[8px] uppercase font-black px-3 py-1">Digitalizado</Badge>
+                    <div className="flex items-center gap-2 text-slate-400 font-bold text-[9px] uppercase tracking-widest">
+                        <Clock size={12} /> {selectedSale && format(selectedSale.dateObj, "PPP 'a las' HH:mm", { locale: es })}
+                    </div>
+                </div>
               </div>
               <div className="flex gap-2">
-                <Select 
-                    value={selectedSale?.status} 
-                    onValueChange={(val) => updateSaleStatus(selectedSale.id, val)}
-                >
-                    <SelectTrigger className={cn("h-10 w-36 border-none font-black text-[10px] uppercase rounded-xl", 
-                        STATUS_OPTIONS.find(opt => opt.value === selectedSale?.status)?.color)}>
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="font-black uppercase">
-                        {STATUS_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-                <Button variant="ghost" onClick={() => window.print()} className="text-white hover:bg-white/10 rounded-xl border border-white/20">
+                <Button variant="ghost" onClick={() => window.print()} className="h-10 w-10 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all">
                     <Printer className="h-4 w-4" />
+                </Button>
+                <Button onClick={() => setIsModalOpen(false)} className="h-10 w-10 rounded-xl bg-white/10 hover:bg-rose-500 text-white transition-all hover:rotate-90">
+                    <X className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           </div>
           
-          <div className="p-10 space-y-10 bg-white overflow-y-auto max-h-[70vh]">
+          <div className="p-10 space-y-8 bg-white overflow-y-auto max-h-[80vh]">
+            
+            {/* SECCIÓN 1: DATOS PERSONALES */}
             <section className="space-y-4">
-              <h3 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest border-b pb-2">Datos del Cliente</h3>
-              <div className="grid grid-cols-2 gap-6 bg-slate-50 p-6 rounded-3xl border">
-                <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase">Nombre</p>
-                  <p className="text-sm font-black uppercase">{selectedSale?.clientName}</p>
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                <User className="text-cyan-600" size={16}/>
+                <h3 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Información del Titular</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50/50 p-6 rounded-2xl border border-slate-100 shadow-inner">
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-slate-400 uppercase">Nombre Completo</p>
+                  <p className="text-[13px] font-black uppercase text-slate-700">{selectedSale?.clientName}</p>
                 </div>
-                <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase">DNI</p>
-                  <p className="text-sm font-black uppercase">{selectedSale?.clienteDni}</p>
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-slate-400 uppercase">DNI / NIE</p>
+                  <p className="text-[13px] font-black text-cyan-700 font-mono">{selectedSale?.clienteDni}</p>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-[9px] font-black text-slate-400 uppercase">Dirección</p>
-                  <p className="text-sm font-black">{selectedSale?.clientFull?.address || "No registrada"}</p>
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-slate-400 uppercase">Teléfono de Contacto</p>
+                  <p className="text-[13px] font-bold text-slate-700">{selectedSale?.clientFull?.phone || "No disponible"}</p>
+                </div>
+                <div className="md:col-span-3 space-y-1 pt-2 border-t border-slate-200/50">
+                  <p className="text-[8px] font-black text-slate-400 uppercase">Correo Electrónico</p>
+                  <p className="text-[13px] font-bold text-slate-600 lowercase">{selectedSale?.clientFull?.email || "Sin email registrado"}</p>
                 </div>
               </div>
             </section>
 
+            {/* SECCIÓN 2: UBICACIÓN Y SUMINISTRO */}
             <section className="space-y-4">
-              <h3 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest border-b pb-2">Servicios contratados</h3>
-              <div className="space-y-2">
-                {selectedSale?.servicios?.map((s: any, i: number) => (
-                    <div key={i} className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
-                        <span className="font-bold text-slate-700">{s.nombre}</span>
-                        <span className="font-black text-slate-900">{Number(s.precioBase).toFixed(2)} €</span>
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                <MapPin className="text-cyan-600" size={16}/>
+                <h3 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Punto de Suministro / Instalación</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/30 p-6 rounded-2xl border border-dashed border-slate-200">
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-slate-400 uppercase">Dirección Principal</p>
+                  <p className="text-[13px] font-bold text-slate-600 italic">
+                    {selectedSale?.clientFull?.address || "Dirección no especificada"}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <p className="text-[8px] font-black text-slate-400 uppercase">C. Postal</p>
+                        <p className="text-[13px] font-bold text-slate-600">{selectedSale?.clientFull?.postalCode || "---"}</p>
                     </div>
-                ))}
+                    <div className="space-y-1">
+                        <p className="text-[8px] font-black text-slate-400 uppercase">Localidad</p>
+                        <p className="text-[13px] font-bold text-slate-600">{selectedSale?.clientFull?.city || "---"}</p>
+                    </div>
+                </div>
               </div>
             </section>
 
-            <div className="flex gap-4">
-              <div className="flex-1 bg-slate-900 rounded-3xl p-6 text-white text-center">
-                <p className="text-[9px] font-black uppercase opacity-50">Operadora</p>
-                <p className="text-xl font-black text-cyan-400 uppercase">{selectedSale?.operadorDestino}</p>
+            {/* SECCIÓN 3: SERVICIOS CONTRATADOS */}
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                <Hash className="text-cyan-600" size={16}/>
+                <h3 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Detalle del Contrato</h3>
               </div>
-              <div className="flex-1 bg-cyan-600 rounded-3xl p-6 text-white text-center">
-                <p className="text-[9px] font-black uppercase opacity-80">Total</p>
-                <div className="text-3xl font-black">{Number(selectedSale?.precioCierre).toLocaleString('es-ES')} €</div>
+              <div className="space-y-2">
+                {selectedSale?.servicios && selectedSale.servicios.length > 0 ? (
+                    selectedSale.servicios.map((s: any, i: number) => (
+                        <div key={i} className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-100 shadow-sm transition-all hover:border-cyan-200">
+                            <div className="flex items-center gap-3">
+                                <div className="h-6 w-6 bg-cyan-50 rounded-md flex items-center justify-center text-cyan-600 text-[10px] font-black">
+                                    {i + 1}
+                                </div>
+                                <span className="font-bold text-slate-700 text-[11px] uppercase tracking-wide">{s.nombre}</span>
+                            </div>
+                            <span className="font-black text-slate-900 text-sm">{Number(s.precioBase).toFixed(2)} <small className="text-[10px] font-normal text-slate-400">€</small></span>
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-center p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-400 text-[10px] font-bold uppercase">
+                        No hay desglose de servicios individuales
+                    </div>
+                )}
               </div>
-            </div>
+            </section>
 
-            <Button onClick={() => setIsModalOpen(false)} className="w-full h-14 bg-slate-100 hover:bg-slate-200 text-slate-900 font-black rounded-2xl uppercase text-[10px]">
-              Cerrar Expediente
-            </Button>
+            {/* FOOTER MODAL: TOTALES Y BANCO */}
+            <div className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-slate-900 rounded-[1.5rem] p-6 text-white flex items-center justify-between group transition-all hover:bg-slate-800">
+                        <div>
+                            <p className="text-[8px] font-black uppercase opacity-40 tracking-widest mb-1">Operadora Destino</p>
+                            <p className="text-xl font-black text-cyan-400 uppercase italic tracking-tighter">{selectedSale?.operadorDestino}</p>
+                        </div>
+                        <ShieldCheck className="opacity-20 group-hover:scale-110 transition-transform" size={40} />
+                    </div>
+                    <div className="bg-cyan-600 rounded-[1.5rem] p-6 text-white flex items-center justify-between shadow-xl shadow-cyan-600/20">
+                        <div>
+                            <p className="text-[8px] font-black uppercase opacity-60 tracking-widest mb-1">Importe Total Cierre</p>
+                            <div className="text-3xl font-black italic tracking-tighter">
+                                {Number(selectedSale?.precioCierre).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €
+                            </div>
+                        </div>
+                        <CreditCard className="opacity-30" size={40} />
+                    </div>
+                </div>
+
+                <Button 
+                    onClick={() => setIsModalOpen(false)} 
+                    className="w-full mt-8 h-14 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-900 font-black rounded-2xl uppercase text-[9px] tracking-[0.3em] transition-all"
+                >
+                  Archivar Expediente Digital
+                </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

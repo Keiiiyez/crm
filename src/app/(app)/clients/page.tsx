@@ -9,7 +9,9 @@ import {
   User, 
   MapPin, 
   CreditCard, 
-  Fingerprint
+  Fingerprint,
+  Calendar,
+  Building2
 } from "lucide-react"
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
@@ -181,133 +183,163 @@ export default function ClientsPage() {
   };
 
   return (
-    <div className="space-y-8 p-8 bg-slate-50/50 min-h-screen text-slate-900">
+    <div className="min-h-screen bg-slate-50/50 p-6 lg:p-12 space-y-10">
       
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 px-2">
-        <div>
-          <h1 className="text-3xl font-black tracking-tighter text-slate-800 flex items-center gap-3 uppercase">
-            <User className="h-8 w-8 text-cyan-500" /> Cartera de Clientes
-          </h1>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Gestión avanzada de identidades y facturación bancaria</p>
+      {}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6 max-w-[1600px] mx-auto">
+        <div className="flex items-center gap-5">
+          <div className="h-14 w-14 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
+            <User className="h-7 w-7 text-slate-800" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
+              Cartera <span className="text-slate-400 font-light">de</span> Clientes
+            </h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-0.5">Gestión de identidades y facturación</p>
+          </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
           <input type="file" className="hidden" ref={fileInputRef} accept=".xlsx, .xls" onChange={handleImportExcel} />
           <Button 
-            variant="outline" 
-            className="h-14 border-none shadow-xl shadow-cyan-900/5 bg-white text-emerald-600 hover:bg-emerald-50 font-black text-[10px] uppercase rounded-2xl px-6 transition-all"
+            variant="ghost" 
+            className="h-12 text-slate-500 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest px-6"
             onClick={() => fileInputRef.current?.click()}
           >
-            <FileSpreadsheet className="h-5 w-5 mr-2" /> Importar Excel
+            <FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-500" /> Importar Excel
           </Button>
 
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button 
                 className="h-14 bg-slate-900 hover:bg-cyan-600 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl px-8 shadow-xl shadow-slate-200 transition-all border-none"
-                onClick={() => { setEditingClient(null); setPendingSale(null); }}
+                onClick={() => { setEditingClient(null); setPendingSale(null); setOperator(""); setIbanValue(""); }}
               >
-                 <PlusCircle className="h-5 w-5 mr-2" /> Nuevo Registro
+                 <PlusCircle className="h-4 w-4 mr-2" /> Nuevo Registro
               </Button>
             </DialogTrigger>
             
-            <DialogContent className="sm:max-w-[900px] p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
+            <DialogContent className="sm:max-w-[1000px] p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
               <form onSubmit={handleSubmit}>
                 <div className="bg-slate-900 p-10 text-white relative">
                   <DialogHeader>
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 mb-2">Expediente de Identidad</p>
-                    <DialogTitle className="text-4xl font-black tracking-tighter uppercase">
-                      {editingClient?.id ? `Editando: ${editingClient.name}` : "Registrar Nuevo Cliente"}
+                    <DialogTitle className="text-4xl font-black tracking-tighter uppercase italic">
+                      {editingClient?.id ? "Actualizar Ficha" : "Registrar Cliente"}
                     </DialogTitle>
                     <DialogDescription className="text-slate-400 font-bold text-xs uppercase mt-3 flex items-center gap-2">
                       {pendingSale ? (
                         <span className="bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/20">
                           ✨ Venta automática detectada: {pendingSale.total}€
                         </span>
-                      ) : "Verifique la integridad de los datos legales antes de procesar."}
+                      ) : "Verifique la integridad de los datos antes de guardar."}
                     </DialogDescription>
                   </DialogHeader>
                 </div>
 
-                <div className="p-10 space-y-10 bg-white overflow-y-auto max-h-[65vh]">
+                <div className="p-10 space-y-10 bg-white overflow-y-auto max-h-[70vh]">
                   {ibanValue && ibanValue.length !== 24 && (
                     <Alert className="bg-red-50 border-none rounded-2xl py-4 px-6 flex items-center">
                       <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
                       <AlertDescription className="text-[11px] font-black uppercase text-red-600">
-                        IBAN Incorrecto: Faltan {24 - ibanValue.length} caracteres para validar el estándar SEPA.
+                        IBAN Incorrecto: Faltan {24 - ibanValue.length} caracteres.
                       </AlertDescription>
                     </Alert>
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                    
+                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
-                        <Fingerprint size={14}/> Identidad Legal
+                        <Fingerprint size={14}/> Identidad
                       </h4>
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Nombre Completo / Razón Social</Label>
-                          <Input name="name" defaultValue={editingClient?.name || ""} required className="bg-slate-50 border-none rounded-2xl font-bold h-12 focus:ring-2 ring-cyan-500/20" />
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Nombre Completo</Label>
+                          <Input name="name" defaultValue={editingClient?.name || ""} required className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">DNI / NIE / CIF</Label>
-                          <Input name="dni" defaultValue={editingClient?.dni || ""} required className="bg-slate-50 border-none rounded-2xl font-mono uppercase font-black text-cyan-600 h-12 focus:ring-2 ring-cyan-500/20" />
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">DNI / CIF</Label>
+                          <Input name="dni" defaultValue={editingClient?.dni || ""} required className="bg-slate-50 border-none rounded-2xl font-mono uppercase font-black text-cyan-600 h-12" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Fecha de Nacimiento</Label>
+                          <Input name="birthDate" type="text" placeholder="DD/MM/AAAA" defaultValue={editingClient?.birthDate || ""} className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Nacionalidad</Label>
+                          <div className="space-y-1">
+                            <Label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Nacionalidad</Label>
                             <Input name="nationality" defaultValue={editingClient?.nationality || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
                           </div>
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Género</Label>
+                          <div className="space-y-1">
+                            <Label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Género</Label>
                             <Input name="gender" defaultValue={editingClient?.gender || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
                           </div>
                         </div>
                       </div>
                     </div>
 
+                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
-                        <MapPin size={14}/> Ubicación y Contacto
+                        <MapPin size={14}/> Ubicación & Contacto
                       </h4>
                       <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Teléfono Móvil</Label>
-                          <Input name="phone" defaultValue={editingClient?.phone || ""} required className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Móvil</Label>
+                            <Input name="phone" defaultValue={editingClient?.phone || ""} required className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Email</Label>
+                            <Input name="email" type="email" defaultValue={editingClient?.email || ""} required className="bg-slate-50 border-none rounded-2xl font-bold lowercase h-12" />
+                          </div>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">E-mail Corporativo</Label>
-                          <Input name="email" type="email" defaultValue={editingClient?.email || ""} required className="bg-slate-50 border-none rounded-2xl font-bold lowercase h-12" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Dirección Fiscal</Label>
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Dirección</Label>
                           <Input name="address" defaultValue={editingClient?.address || ""} required className="bg-slate-50 border-none rounded-2xl text-[11px] font-bold h-12" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <Input name="city" placeholder="Población" defaultValue={editingClient?.city || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
-                          <Input name="postalCode" placeholder="C.P." defaultValue={editingClient?.postalCode || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
+                          <div className="space-y-1">
+                            <Label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Ciudad</Label>
+                            <Input name="city" defaultValue={editingClient?.city || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Provincia</Label>
+                            <Input name="province" defaultValue={editingClient?.province || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Código Postal</Label>
+                          <Input name="postalCode" defaultValue={editingClient?.postalCode || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
                         </div>
                       </div>
                     </div>
 
+                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
-                        <CreditCard size={14}/> Datos Bancarios
+                        <CreditCard size={14}/> Datos de Facturación
                       </h4>
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Operadora Origen</Label>
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Operador Donante</Label>
                           <Select value={operator} onValueChange={setOperator} required>
-                            <SelectTrigger className="bg-slate-50 border-none rounded-2xl font-black uppercase text-[10px] h-12 focus:ring-0">
-                                <SelectValue placeholder="SELECCIONAR..." />
+                            <SelectTrigger className="bg-slate-50 border-none rounded-2xl font-black uppercase text-[10px] h-12">
+                                <SelectValue placeholder="Elegir operador..." />
                             </SelectTrigger>
-                            <SelectContent className="rounded-3xl border-none shadow-2xl p-2">
+                            <SelectContent className="rounded-2xl border-none shadow-2xl p-2">
                               {OPERATOR_OPTIONS.map(op => <SelectItem key={op} value={op} className="font-bold text-[10px] rounded-xl">{op}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Número de Cuenta (IBAN)</Label>
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Entidad Bancaria</Label>
+                          <Input name="bankName" placeholder="Ej: BBVA, Santander..." defaultValue={editingClient?.bankName || ""} className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">IBAN (24 caracteres)</Label>
                           <Input 
                             value={ibanValue} 
                             onChange={(e) => setIbanValue(e.target.value.replace(/\s/g, "").toUpperCase())}
@@ -316,21 +348,22 @@ export default function ClientsPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Notas del Expediente</Label>
-                          <Textarea name="observations" defaultValue={editingClient?.observations || ""} className="bg-slate-50 border-none rounded-2xl h-28 text-[11px] font-bold resize-none p-4" />
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Observaciones</Label>
+                          <Textarea name="observations" defaultValue={editingClient?.observations || ""} className="bg-slate-50 border-none rounded-2xl h-20 text-[11px] font-bold resize-none" />
                         </div>
                       </div>
                     </div>
+
                   </div>
                 </div>
 
                 <DialogFooter className="p-10 bg-slate-50 border-t border-slate-100">
                   <Button 
                     type="submit" 
-                    className="w-full h-16 bg-slate-900 hover:bg-cyan-600 text-white font-black rounded-[1.5rem] uppercase text-xs tracking-[0.2em] transition-all shadow-2xl disabled:opacity-50" 
+                    className="w-full h-16 bg-slate-900 hover:bg-cyan-600 text-white font-black rounded-3xl uppercase text-xs tracking-[0.2em] transition-all disabled:opacity-50" 
                     disabled={isSubmitting || (ibanValue.length > 0 && ibanValue.length !== 24)}
                   >
-                    {isSubmitting ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : editingClient?.id ? "Actualizar Registro" : "Confirmar Alta en Cartera"}
+                    {isSubmitting ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : "Finalizar y Guardar Registro"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -340,15 +373,14 @@ export default function ClientsPage() {
       </div>
 
       {}
-      <div className="overflow-hidden p-4">
+      <div className="max-w-[1600px] mx-auto px-4">
         <DataTable 
-          columns={columns(handleEdit)} 
+          columns={columns(handleEdit, fetchClients)} 
           data={data} 
-          filterInputPlaceholder="Filtrar por nombre o documento de identidad..." 
+          filterInputPlaceholder="Filtrar por nombre o documento..." 
         />
       </div>
 
-      {}
     </div>
   )
 }
