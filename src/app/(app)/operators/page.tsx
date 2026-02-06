@@ -14,7 +14,7 @@ export default function OperatorsPage() {
         <CardDescription>Administra las operadoras disponibles en el sistema.</CardDescription>
       </CardHeader>
       <CardContent>
-        <p>Operadoras en el sistema</p>
+        <p>Operadoras en el sistema:</p>
       </CardContent>
     </Card>
   )

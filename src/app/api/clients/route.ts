@@ -61,7 +61,7 @@ export async function POST(request: Request) {
           clienteId, 
           sale.operator_destino || client.operator, 
           sale.total || 0, 
-          sale.observations || "Venta importada desde Excel"
+          sale.observations || "Venta importada"
         ]
       );
     }

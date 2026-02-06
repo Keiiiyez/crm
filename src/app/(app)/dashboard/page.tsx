@@ -71,7 +71,7 @@ export default function DashboardPage() {
         <Badge className="bg-white text-cyan-600 border-cyan-100 shadow-sm font-bold rounded-lg px-4 py-1 uppercase tracking-tighter">En linea</Badge>
       </div>
 
-      {/* METRICAS PRINCIPALES */}
+      {}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Ingreso" value={`${stats.ingresoReal.toLocaleString('es-ES')} €`} icon={CheckCircle2} desc="Ventas finalizadas" color="text-emerald-500" />
         <StatCard title="Proceso" value={`${stats.ingresoPendiente.toLocaleString('es-ES')} €`} icon={Clock} desc="Ventas por tramitar" color="text-cyan-500" />
@@ -80,7 +80,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-7">
-        {/* GRÁFICO DE BARRAS PRINCIPAL */}
+        {}
         <Card className="md:col-span-4 border-none shadow-2xl shadow-cyan-900/5 rounded-[2.5rem] bg-white">
           <CardHeader className="p-8 pb-0">
             <CardTitle className="text-xs font-black uppercase tracking-widest text-cyan-600">Evolución de Ingresos</CardTitle>
@@ -91,7 +91,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* GRÁFICO POR OPERADORAS */}
+        {}
         <Card className="md:col-span-3 border-none shadow-2xl shadow-cyan-900/5 rounded-[2.5rem] bg-white">
           <CardHeader className="p-8 pb-0">
             <CardTitle className="text-xs font-black uppercase tracking-widest text-cyan-600">Ventas por operador</CardTitle>
@@ -102,7 +102,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* GRÁFICO POR ESTADOS */}
+        {}
         <Card className="md:col-span-3 border-none shadow-2xl shadow-cyan-900/5 rounded-[2.5rem] bg-white">
           <CardHeader className="p-8 pb-0">
             <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Estado de Operaciones</CardTitle>
@@ -113,7 +113,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* TABLA DE ÚLTIMOS MOVIMIENTOS */}
+        {}
         <Card className="md:col-span-4 border-none shadow-2xl shadow-cyan-900/5 rounded-[2.5rem] bg-white overflow-hidden">
           <CardHeader className="p-8 border-b border-slate-50">
             <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Historial</CardTitle>

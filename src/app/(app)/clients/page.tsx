@@ -189,7 +189,7 @@ export default function ClientsPage() {
   return (
     <div className="space-y-8 p-8 bg-slate-50/50 min-h-screen text-slate-900">
       
-      {/* CABECERA DASHBOARD */}
+      {}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 px-2">
         <div>
           <h1 className="text-3xl font-black tracking-tighter text-slate-800 flex items-center gap-3 uppercase">
@@ -247,7 +247,7 @@ export default function ClientsPage() {
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                    {/* COLUMNA 1: IDENTIDAD */}
+                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
                         <Fingerprint size={14}/> Identidad Legal
@@ -274,7 +274,7 @@ export default function ClientsPage() {
                       </div>
                     </div>
 
-                    {/* COLUMNA 2: LOCALIZACIÓN */}
+                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
                         <MapPin size={14}/> Ubicación y Contacto
@@ -299,7 +299,7 @@ export default function ClientsPage() {
                       </div>
                     </div>
 
-                    {/* COLUMNA 3: FINANZAS */}
+                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
                         <CreditCard size={14}/> Datos Bancarios
@@ -349,7 +349,7 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      {/* CONTENEDOR DE TABLA */}
+      {}
       <div className="bg-white rounded-[3rem] shadow-2xl shadow-cyan-900/5 border-none overflow-hidden p-4">
         <DataTable 
           columns={columns(handleEdit)} 
@@ -358,7 +358,7 @@ export default function ClientsPage() {
         />
       </div>
 
-      {/* FOOTER STATS */}
+      {}
       <div className="flex justify-center pb-12">
         <div className="bg-white px-10 py-4 rounded-full shadow-xl shadow-cyan-900/5 flex items-center gap-6 border border-slate-50">
           <div className="flex -space-x-3">

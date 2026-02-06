@@ -106,7 +106,7 @@ export default function ProductsPage() {
         {}
         <Card className="lg:col-span-5 rounded-[2.5rem] border-none shadow-2xl bg-white overflow-hidden h-fit">
           <CardHeader className="p-8 pb-4 bg-slate-900 text-white">
-            <CardTitle className="text-xl font-black uppercase tracking-tighter">Añade nuevos servicios</CardTitle>
+            <CardTitle className="text-xl font-black uppercase tracking-tighter">Añade nuevos servicios + </CardTitle>
           </CardHeader>
 
           <CardContent className="p-8 space-y-6">

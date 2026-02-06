@@ -61,7 +61,7 @@ export default function SalesHistoryPage() {
   return (
     <div className="space-y-8 p-8 bg-slate-50/50 min-h-screen text-slate-900">
       
-      {/* CABECERA */}
+      {}
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-black tracking-tighter text-slate-800 flex items-center gap-3">
@@ -71,12 +71,12 @@ export default function SalesHistoryPage() {
         </div>
       </div>
 
-      {/* FILTROS */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2 relative group">
           <Search className="absolute left-4 top-4 h-5 w-5 text-cyan-500" />
           <Input 
-            placeholder="Buscar por cliente o DNI..." 
+            placeholder="Buscar cliente o DNI..." 
             className="h-14 pl-12 border-none shadow-xl shadow-cyan-900/5 rounded-2xl bg-white font-bold text-slate-700"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -96,7 +96,7 @@ export default function SalesHistoryPage() {
         </Popover>
       </div>
 
-      {/* TABLA */}
+      {}
       <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-cyan-900/5 border-none overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-slate-50/50 text-[9px] font-black uppercase text-slate-400">
@@ -138,14 +138,14 @@ export default function SalesHistoryPage() {
         </table>
       </div>
 
-      {/* MODAL DETALLE COMPLETO (ESTILO PDF) */}
+      {}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-3xl p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
-          {/* Header del Expediente */}
+          {}
           <div className="bg-slate-900 p-8 text-white relative">
             <div className="flex justify-between items-start">
               <div className="space-y-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">Expediente de Venta Oficial</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">Contrato generado</p>
                 <DialogTitle className="text-3xl font-black tracking-tighter uppercase">ID CONTRATO: #{selectedSale?.id?.toString().padStart(5, '0')}</DialogTitle>
                 <p className="text-xs font-bold text-slate-400">Generado el {selectedSale?.dateObj && format(selectedSale.dateObj, "PPP", { locale: es })}</p>
               </div>
@@ -159,7 +159,7 @@ export default function SalesHistoryPage() {
           </div>
           
           <div className="p-10 space-y-10 bg-white overflow-y-auto max-h-[70vh]">
-            {/* BLOQUE 1: DATOS COMPLETOS DEL CLIENTE */}
+            {}
             <section className="space-y-4">
               <h3 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest border-b border-cyan-50 pb-2">Información del Titular</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
@@ -168,7 +168,7 @@ export default function SalesHistoryPage() {
                   <p className="text-sm font-black text-slate-800">{selectedSale?.clientName}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><ShieldCheck size={10}/> Documento (DNI/NIE)</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1"><ShieldCheck size={10}/> Documento (DNI/NIE/NIF)</p>
                   <p className="text-sm font-black text-slate-800">{selectedSale?.clienteDni}</p>
                 </div>
                 <div className="space-y-1">
@@ -196,15 +196,15 @@ export default function SalesHistoryPage() {
               </div>
             </section>
 
-            {/* BLOQUE 2: SERVICIOS Y OPERADOR */}
+            {}
             <section className="space-y-4">
               <h3 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest border-b border-cyan-50 pb-2">Servicios y Tarifas</h3>
               <div className="border border-slate-100 rounded-3xl overflow-hidden">
                 <table className="w-full text-xs">
                   <thead className="bg-slate-50 text-[9px] font-black uppercase text-slate-400">
                     <tr>
-                      <th className="px-6 py-3">Concepto / Producto</th>
-                      <th className="px-6 py-3 text-right">Precio Base</th>
+                      <th className="px-6 py-3">Concepto</th>
+                      <th className="px-6 py-3 text-right">Precio</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -219,7 +219,7 @@ export default function SalesHistoryPage() {
               </div>
             </section>
 
-            {/* BLOQUE 3: TOTALES */}
+            {}
             <div className="flex flex-col md:flex-row gap-4 items-stretch">
               <div className="flex-1 bg-slate-900 rounded-3xl p-6 text-white">
                 <p className="text-[9px] font-black uppercase tracking-widest opacity-50 mb-1">Operadora Destino</p>

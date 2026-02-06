@@ -39,7 +39,7 @@ export default function SaleDetail() {
             {}
             <div className="grid grid-cols-2 gap-8">
                 <div>
-                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Cliente Titular</h4>
+                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Titular</h4>
                     <p className="font-bold text-slate-800 text-lg">{sale.clientName}</p>
                     <p className="text-slate-500">{sale.clienteDni}</p>
                 </div>

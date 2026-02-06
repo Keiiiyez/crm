@@ -8,7 +8,7 @@ export async function DELETE(
   try {
     const { id } = await params; 
     await db.query("DELETE FROM clientes WHERE id = ?", [id]);
-    return NextResponse.json({ message: "Borrado OK" });
+    return NextResponse.json({ message: "Borrado" });
   } catch (error: any) {
     console.error("Error al borrar:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -61,7 +61,7 @@ export async function PUT(
       ]
     );
 
-    return NextResponse.json({ message: "Actualizado OK" });
+    return NextResponse.json({ message: "Actualizado" });
   } catch (error: any) {
     console.error("Error al actualizar:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
