@@ -9,6 +9,10 @@ import {
   Package,
   UserCog,
   ChevronRight,
+  FileText,
+  Briefcase,
+  TrendingUp,
+  LogAlt,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "./ui/button"
@@ -26,8 +30,18 @@ const navLinks = [
     subLinks: [{ href: "/sales/new", label: "Nueva Venta" }],
   },
   { href: "/clients", icon: Users, label: "Clientes" },
+  { href: "/contracts", icon: Briefcase, label: "Contratos" },
   { href: "/products", icon: Package, label: "Servicios" },
-  { href: "/inform", icon: UserCog, label: "Informes" },
+  { href: "/comisiones", icon: TrendingUp, label: "Comisiones" },
+  {
+    href: "/inform",
+    icon: UserCog,
+    label: "Informes",
+    subLinks: [
+      { href: "/inform/auditoria", label: "Auditoría" },
+      { href: "/inform/promociones", label: "Promociones" },
+    ],
+  },
 ]
 
 export function AppNav({ isMobile }: AppNavProps) {

@@ -13,7 +13,6 @@ export async function GET() {
   try {
     connection = await mysql.createConnection(dbConfig);
 
-    // 1. Obtener Ventas con TODOS los datos del cliente
     const [rows]: any = await connection.execute(`
       SELECT 
         s.id, 
@@ -35,7 +34,6 @@ export async function GET() {
       ORDER BY s.fecha DESC
     `);
 
-    // 2. Obtener los items (con el JOIN a productos que hicimos antes)
     const [items]: any = await connection.execute(`
       SELECT 
         si.sale_id,
@@ -53,7 +51,6 @@ export async function GET() {
 
     const salesWithItems = rows.map((sale: any) => ({
       ...sale,
-      // Agrupamos los datos del cliente para que el frontend los encuentre fácil
       clientFull: {
         phone: sale.clientPhone,
         email: sale.clientEmail,
@@ -78,6 +75,64 @@ export async function GET() {
     return NextResponse.json(salesWithItems);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  } finally {
+    if (connection) await connection.end();
+  }
+}
+
+export async function POST(request: Request) {
+  let connection;
+  try {
+    const body = await request.json();
+    const { clienteId, operadorDestino, servicios, precioCierre, observaciones } = body;
+
+    // Validar datos requeridos
+    if (!clienteId || !operadorDestino || !servicios || servicios.length === 0) {
+      return NextResponse.json(
+        { error: "Datos requeridos faltantes" },
+        { status: 400 }
+      );
+    }
+
+    connection = await mysql.createConnection(dbConfig);
+
+    // Crear registro en tabla sales
+    const [saleResult]: any = await connection.execute(
+      `INSERT INTO sales (cliente_id, operador_destino, precio_cierre, status, observaciones, fecha)
+       VALUES (?, ?, ?, ?, ?, NOW())`,
+      [clienteId, operadorDestino, precioCierre || 0, "PENDIENTE", observaciones || ""]
+    );
+
+    const saleId = saleResult.insertId;
+
+    // Crear registros en tabla sale_items
+    for (const servicio of servicios) {
+      await connection.execute(
+        `INSERT INTO sale_items (sale_id, nombre_servicio, precio_base)
+         VALUES (?, ?, ?)`,
+        [saleId, servicio.nombre, servicio.precioBase || 0]
+      );
+    }
+
+    // Devolver la venta creada
+    return NextResponse.json(
+      {
+        id: saleId,
+        clienteId,
+        operadorDestino,
+        precioCierre,
+        status: "PENDIENTE",
+        servicios,
+        createdAt: new Date().toISOString(),
+      },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    console.error("Error creating sale:", error);
+    return NextResponse.json(
+      { error: error.message || "Error al crear la venta" },
+      { status: 500 }
+    );
   } finally {
     if (connection) await connection.end();
   }

@@ -1,18 +1,10 @@
 "use client"
 
-import { CircleUser, Menu, Package2 } from "lucide-react"
-
+import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { AppNav } from "./app-nav"
+import { UserMenu } from "./user-menu"
 
 export function AppHeader() {
   return (
@@ -34,24 +26,11 @@ export function AppHeader() {
       </Sheet>
 
       <div className="w-full flex-1">
-        {}
+        {/* Espacio vacío para logo o título si lo necesitas */}
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="secondary" size="icon" className="rounded-full">
-            <CircleUser className="h-5 w-5" />
-            <span className="sr-only">Búsqueda</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Ajustes</DropdownMenuItem>
-          <DropdownMenuItem>Ayuda</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Salir</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+
+      {/* Menú del usuario actual */}
+      <UserMenu />
     </header>
   )
 }
