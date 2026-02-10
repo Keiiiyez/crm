@@ -31,7 +31,7 @@ const formSchema = z.object({
   servicios: z.array(z.object({
     nombre: z.string().min(1, "Requerido"),
     precioBase: z.coerce.number().min(0.01, "Precio mínimo 0.01")
-  })).min(1, "Añade al menos un servicio"),
+  })).min(0, "Añade al menos un servicio"),
   precioCierre: z.number(),
   observaciones: z.string().optional(),
 })
@@ -86,7 +86,14 @@ export function SalesForm() {
       }
     }
     loadData();
-  }, [])
+
+    // Para ASESOR y COORDINADOR, agregar un servicio vacío por defecto
+    if (user?.rol === "ASESOR" || user?.rol === "COORDINADOR") {
+      if (fields.length === 0) {
+        append({ nombre: "", precioBase: 0 });
+      }
+    }
+  }, [user?.rol, fields.length, append])
 
   const watchServicios = form.watch("servicios");
   
@@ -238,10 +245,14 @@ export function SalesForm() {
                 <InfoItem icon={<CreditCard />} label="DNI / NIE" value={selectedClient?.dni} />
                 <InfoItem icon={<Phone />} label="Teléfono" value={selectedClient?.phone} />
                 <InfoItem icon={<Mail />} label="Email" value={selectedClient?.email} />
-                <InfoItem icon={<MapPin />} label="Dirección" value={selectedClient?.address} />
-                <InfoItem icon={<Globe />} label="Ubicación" value={`${selectedClient?.city || ""}, ${selectedClient?.province || ""}`} />
-                <InfoItem icon={<Landmark />} label="IBAN" value={selectedClient?.iban} />
-                <InfoItem icon={<Building2 />} label="Operador" value={selectedClient?.operator} />
+                {user?.rol !== "ASESOR" && (
+                  <>
+                    <InfoItem icon={<MapPin />} label="Dirección" value={selectedClient?.address} />
+                    <InfoItem icon={<Globe />} label="Ubicación" value={`${selectedClient?.city || ""}, ${selectedClient?.province || ""}`} />
+                    <InfoItem icon={<Landmark />} label="IBAN" value={selectedClient?.iban} />
+                    <InfoItem icon={<Building2 />} label="Operador" value={selectedClient?.operator} />
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -253,9 +264,11 @@ export function SalesForm() {
             <h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm tracking-widest">
               <Receipt className="h-5 w-5 text-sky-400" /> Configuración de Venta
             </h3>
-            <Button type="button" onClick={() => append({ nombre: "", precioBase: 0 })} className="bg-sky-50 text-sky-600 hover:bg-sky-100 rounded-xl px-6">
-              <Plus className="h-4 w-4 mr-1" /> Añadir Servicio
-            </Button>
+            {user?.rol !== "ASESOR" && user?.rol !== "COORDINADOR" && (
+              <Button type="button" onClick={() => append({ nombre: "", precioBase: 0 })} className="bg-sky-50 text-sky-600 hover:bg-sky-100 rounded-xl px-6">
+                <Plus className="h-4 w-4 mr-1" /> Añadir Servicio
+              </Button>
+            )}
           </div>
 
           <CardContent className="p-8 space-y-6">

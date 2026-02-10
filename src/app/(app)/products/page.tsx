@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { httpClient } from "@/lib/http-client"
+import { useAuth } from "@/lib/auth-context"
+import { hasPermission } from "@/lib/permissions"
 
 const GB_OPTIONS = ["25GB", "50GB", "100GB", "150GB", "ILIMITADOS"]
 const STREAMING_OPTIONS = [
@@ -28,6 +30,9 @@ const STREAMING_OPTIONS = [
 ]
 
 export default function ProductsPage() {
+  const { user } = useAuth()
+  const canCreateProduct = user?.rol ? hasPermission(user.rol, "create_product") : false
+  
   const [products, setProducts] = React.useState<any[]>([])
   const [isSaving, setIsSaving] = React.useState(false)
   
@@ -106,7 +111,7 @@ export default function ProductsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {}
+        {canCreateProduct && (
         <Card className="lg:col-span-5 rounded-[2.5rem] border-none shadow-2xl bg-white overflow-hidden h-fit">
           <CardHeader className="p-8 pb-4 bg-slate-900 text-white">
             <CardTitle className="text-xl font-black uppercase tracking-tighter">Añade nuevos servicios + </CardTitle>
@@ -269,9 +274,10 @@ export default function ProductsPage() {
             </form>
           </CardContent>
         </Card>
+        )}
 
         {}
-        <Card className="lg:col-span-7 rounded-[2.5rem] border-none shadow-2xl bg-white overflow-hidden">
+        <Card className={`${canCreateProduct ? "lg:col-span-7" : "lg:col-span-12"} rounded-[2.5rem] border-none shadow-2xl bg-white overflow-hidden`}>
           <CardContent className="p-6">
             <Table>
               <TableHeader>
@@ -303,9 +309,11 @@ export default function ProductsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <span className="text-xl font-black text-slate-800 tracking-tighter">{Number(p.price).toFixed(2)}€</span>
-                      <button onClick={() => handleDelete(p.id)} className="ml-4 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all">
-                        <Trash2 className="h-4 w-4"/>
-                      </button>
+                      {canCreateProduct && (
+                        <button onClick={() => handleDelete(p.id)} className="ml-4 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all">
+                          <Trash2 className="h-4 w-4"/>
+                        </button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

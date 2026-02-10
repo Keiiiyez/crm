@@ -23,7 +23,9 @@ export type Permission =
   | "view_audit"
   | "view_reports"
   | "create_users"
-  | "edit_users";
+  | "edit_users"
+  | "create_product"
+  | "edit_product";
 
 // Mapeo de permisos por rol
 export const rolePermissions: Record<UserRole, Permission[]> = {
@@ -33,10 +35,11 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "view_sales",
     "create_sale",
     "view_clients",
+    "view_contracts", // Puede ver contratos que genera
   ],
 
   COORDINADOR: [
-    // Coordinador: supervisa asesores y gestiona ventas
+    // Coordinador: supervisa asesores y gestiona ventas (sin crear servicios/productos)
     "view_dashboard",
     "view_sales",
     "create_sale",
@@ -47,6 +50,7 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "view_contracts",
     "edit_commission_payment", // Marcar comisiones como pagadas
     "view_operators",
+    "view_audit", // Puede ver auditoría
     "view_reports",
   ],
 
@@ -70,6 +74,8 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "edit_operator_promo",
     "view_audit",
     "view_reports",
+    "create_product",
+    "edit_product",
   ],
 
   ADMIN: [
@@ -95,6 +101,8 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "view_reports",
     "create_users",
     "edit_users",
+    "create_product",
+    "edit_product",
   ],
 };
 

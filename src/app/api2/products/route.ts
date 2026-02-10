@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import mysql from "mysql2/promise";
+import { requirePermission } from "@/lib/api-auth";
 
 const dbConfig = {
   host: "localhost",
@@ -20,7 +21,7 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export const POST = requirePermission("create_product", async (req: NextRequest) => {
   try {
     const body = await req.json();
     const { 
@@ -69,4 +70,4 @@ export async function POST(req: Request) {
     console.error("Error en POST:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
+});

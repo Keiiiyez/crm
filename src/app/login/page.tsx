@@ -134,7 +134,7 @@ export default function LoginPage() {
             <div className="pt-6 mt-4 border-t border-white/5 text-center">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-400/5 text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Sistema Seguro 256-bit
+                Versión 1.0
               </div>
             </div>
           </form>
@@ -142,8 +142,8 @@ export default function LoginPage() {
       </Card>
 
       {/* Footer / Info */}
-      <div className="absolute bottom-8 text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">
-        © 2026 IVHAES Telecomunicaciones • Todos los derechos reservados
+      <div className="absolute bottom-8 text-center text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">
+        © 2026 IVHAES NETWORK EIRL • Todos los derechos reservados
       </div>
     </div>
   )

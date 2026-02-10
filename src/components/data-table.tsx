@@ -74,6 +74,8 @@ export function DataTable<TData, TValue>({
         <div className="relative flex-1 max-w-md group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-cyan-500 transition-colors z-10" />
           <Input
+            id={`search-${filterInputPlaceholder}`}
+            name={`search-${filterInputPlaceholder}`}
             placeholder={filterInputPlaceholder}
             value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>

@@ -138,6 +138,8 @@ export default function ContractosPage() {
           <div className="flex gap-4 flex-wrap">
             <div className="flex-1 min-w-[250px]">
               <Input
+                id="contractSearch"
+                name="contractSearch"
                 placeholder="Buscar por nº contrato, cliente o DNI..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

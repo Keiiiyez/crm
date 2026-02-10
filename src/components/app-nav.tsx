@@ -12,6 +12,7 @@ import {
   FileText,
   Briefcase,
   TrendingUp,
+  AlertCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "./ui/button"
@@ -31,12 +32,12 @@ const navLinks = [
   { href: "/clients", icon: Users, label: "Clientes" },
   { href: "/contracts", icon: Briefcase, label: "Contratos" },
   { href: "/products", icon: Package, label: "Servicios" },
+  { href: "/audit", icon: AlertCircle, label: "Auditoría" },
   {
     href: "/inform",
     icon: UserCog,
     label: "Informes",
     subLinks: [
-      { href: "/inform/auditoria", label: "Auditoría" },
       { href: "/inform/promociones", label: "Promociones" },
     ],
   },

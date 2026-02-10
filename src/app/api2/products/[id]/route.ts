@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import mysql from "mysql2/promise";
+import { requirePermission } from "@/lib/api-auth";
 
 const dbConfig = {
   host: "localhost",
@@ -8,12 +9,12 @@ const dbConfig = {
   database: "crm", 
 };
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> } 
-) {
+export const DELETE = requirePermission("edit_product", async (
+  request: NextRequest,
+  user
+) => {
   try {
-    const { id } = await params; 
+    const id = new URL(request.url).pathname.split("/").pop() || "";
     const connection = await mysql.createConnection(dbConfig);
     
     await connection.execute("DELETE FROM products WHERE id = ?", [id]);
@@ -23,4 +24,4 @@ export async function DELETE(
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
+});
