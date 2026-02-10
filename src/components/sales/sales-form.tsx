@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useAuth } from "@/lib/auth-context"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
 import * as z from "zod"
@@ -50,6 +51,7 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode, label: string
 }
 
 export function SalesForm() {
+  const { user } = useAuth()
   const [openSearch, setOpenSearch] = React.useState(false)
   const [clients, setClients] = React.useState<any[]>([])
   const [availableProducts, setAvailableProducts] = React.useState<any[]>([])
@@ -114,11 +116,20 @@ export function SalesForm() {
   }, [fiscalCalculation.total, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user) {
+      toast.error("Debes estar autenticado para registrar ventas");
+      return;
+    }
+
     try {
       const response = await httpClient('/api2/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          usuario_id: user.id,
+          usuario_nombre: user.nombre
+        }),
       });
       if (!response.ok) throw new Error();
       toast.success("Venta registrada con éxito");

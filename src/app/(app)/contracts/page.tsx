@@ -221,7 +221,7 @@ export default function ContractosPage() {
                       {format(new Date(contrato.fecha_inicio), "dd/MM/yyyy")}
                     </TableCell>
                     <TableCell className="font-bold">
-                      {contrato.precio_total.toFixed(2)}€
+                      {Number(contrato.precio_total || contrato.precioTotal || 0).toFixed(2)}€
                     </TableCell>
                     <TableCell className="flex gap-2">
                       <Button
@@ -327,7 +327,7 @@ export default function ContractosPage() {
                     {selectedContrato.servicios.map((s: any, idx: number) => (
                       <li key={idx} className="flex justify-between">
                         <span>{s.nombre}</span>
-                        <span className="font-bold">{s.precio}€</span>
+                        <span className="font-bold">{Number(s.precio || s.precioBase || 0).toFixed(2)}€</span>
                       </li>
                     ))}
                   </ul>

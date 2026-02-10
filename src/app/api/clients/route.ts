@@ -1,22 +1,37 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import mysql from "mysql2/promise";
+
+const dbConfig = {
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "crm",
+};
 
 export async function GET() {
+  let connection;
   try {
-    const [rows] = await db.query("SELECT * FROM clientes ORDER BY id DESC");
+    connection = await mysql.createConnection(dbConfig);
+    const result = await connection.execute("SELECT * FROM clientes ORDER BY id DESC");
+    const rows = result[0];
     return NextResponse.json(rows);
   } catch (error: any) {
+    console.error("Error fetching clients:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
+  } finally {
+    if (connection) await connection.end();
   }
 }
 
 export async function POST(request: Request) {
+  let connection;
   try {
     const body = await request.json();
     
     const { client, sale } = body;
 
-    const [clientResult] = await db.query(
+    connection = await mysql.createConnection(dbConfig);
+    const [clientResult] = await connection.query(
       `INSERT INTO clientes 
         (name, dni, email, phone, address, city, province, postalCode, iban, operator, nationality, birthDate, gender, bankName) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -49,11 +64,11 @@ export async function POST(request: Request) {
       ]
     );
 
-    const [existingClient]: any = await db.query("SELECT id FROM clientes WHERE dni = ?", [client.dni]);
+    const [existingClient]: any = await connection.query("SELECT id FROM clientes WHERE dni = ?", [client.dni]);
     const clienteId = existingClient[0].id;
 
     if (sale && (sale.total > 0 || sale.observations)) {
-      await db.query(
+      await connection.query(
         `INSERT INTO sales 
           (cliente_id, operador_destino, precio_cierre, status, observaciones, fecha) 
          VALUES (?, ?, ?, 'Pending', ?, NOW())`,
@@ -75,5 +90,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Error en API Clients:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
+  } finally {
+    if (connection) await connection.end();
   }
 }

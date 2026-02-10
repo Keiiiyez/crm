@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { httpClient } from "@/lib/http-client"
 
 import { SalesChart } from "@/components/sales-chart"
 import { StatusPieChart } from "@/components/status-pie-chart"
@@ -23,9 +24,9 @@ export default function DashboardPage() {
   const loadData = React.useCallback(async () => {
     try {
       const [sRes, cRes, pRes] = await Promise.all([
-        fetch('/api2/sales').then(res => res.json()),
-        fetch('/api/clients').then(res => res.json()),
-        fetch('/api2/products').then(res => res.json())
+        httpClient('/api2/sales').then(res => res.json()),
+        httpClient('/api/clients').then(res => res.json()),
+        httpClient('/api2/products').then(res => res.json())
       ])
       setSales(Array.isArray(sRes) ? sRes : [])
       setMetrics({ clients: cRes.length || 0, products: pRes.length || 0 })

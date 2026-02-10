@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { httpClient } from "@/lib/http-client"
+import { generateExpedientePDF } from "@/lib/pdf-generator"
 
 const STATUS_OPTIONS = [
   { value: "Pendiente", label: "Pendiente", color: "bg-amber-50 text-amber-600 border-amber-100", icon: Clock },
@@ -40,6 +41,22 @@ export default function SalesHistoryPage() {
   const [selectedSale, setSelectedSale] = React.useState<any | null>(null)
   const [isModalOpen, setIsModalOpen] = React.useState(false)
   const [isUpdating, setIsUpdating] = React.useState(false)
+  const [isGeneratingPDF, setIsGeneratingPDF] = React.useState(false)
+
+  const downloadExpedientePDF = async (sale: any) => {
+    setIsGeneratingPDF(true);
+    try {
+      // Usar lo que ya tenemos del merge en loadData
+      // No necesitamos llamar a la API si ya tiene clientFull
+      await generateExpedientePDF(sale, null);
+      toast.success('PDF descargado');
+    } catch (e) {
+      console.error('PDF Error:', e);
+      toast.error('Error al generar PDF');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   const loadData = React.useCallback(async () => {
     try {
@@ -48,8 +65,27 @@ export default function SalesHistoryPage() {
         httpClient('/api/clients').then(r => r.json())
       ]);
       
-      const mergedSales = (resS || []).map((sale: any) => {
-        const clientData = (resC || []).find((c: any) => c.id.toString() === sale.cliente_id?.toString());
+      console.log('=== SALES DATA ===');
+      console.log('Sales from API:', resS);
+      if (resS && resS.length > 0) {
+        console.log('First sale object keys:', Object.keys(resS[0]));
+        console.log('First sale full object:', resS[0]);
+      }
+      
+      console.log('=== CLIENTS DATA ===');
+      console.log('Clients from API:', resC);
+      if (resC && resC.length > 0) {
+        console.log('First client object:', resC[0]);
+      }
+      
+      const salesArray = Array.isArray(resS) ? resS : [];
+      const clientsArray = Array.isArray(resC) ? resC : [];
+      
+      const mergedSales = salesArray.map((sale: any) => {
+        console.log(`Sale ${sale.id} - looking for cliente match with ID:`, sale.cliente_id, 'or clienteId:', sale.clienteId);
+        const matchingId = sale.cliente_id || sale.clienteId;
+        const clientData = clientsArray.find((c: any) => c.id.toString() === matchingId?.toString());
+        console.log(`Result for sale ${sale.id}:`, clientData);
         return { 
           ...sale, 
           clientFull: clientData,
@@ -59,6 +95,7 @@ export default function SalesHistoryPage() {
       });
       setSales(mergedSales);
     } catch (e) { 
+      console.error('Error loading data:', e);
       toast.error("Error al cargar el historial") 
     }
   }, []);
@@ -158,6 +195,7 @@ export default function SalesHistoryPage() {
             <tr className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400/80">
               <th className="px-8 py-6">Fecha</th>
               <th className="px-8 py-6">Cliente</th>
+              <th className="px-8 py-6">Asesor</th>
               <th className="px-8 py-6">Operadora</th>
               <th className="px-8 py-6 text-center">Estado</th>
               <th className="px-8 py-6 text-right">Importe</th>
@@ -172,6 +210,11 @@ export default function SalesHistoryPage() {
                 </td>
                 <td className="px-8 py-4 uppercase font-bold text-slate-700 text-[13px] tracking-tight group-hover:translate-x-1 transition-transform">
                     {sale.clientName}
+                </td>
+                <td className="px-8 py-4">
+                    <span className="text-purple-600 font-bold uppercase text-[9px] tracking-widest bg-purple-50/40 px-2 py-1 rounded-md">
+                        {sale.usuarioNombre || "—"}
+                    </span>
                 </td>
                 <td className="px-8 py-4">
                     <span className="text-cyan-600 font-bold uppercase text-[9px] tracking-widest bg-cyan-50/40 px-2 py-1 rounded-md">
@@ -210,13 +253,27 @@ export default function SalesHistoryPage() {
                     </div>
                 </td>
                 <td className="px-8 py-4 text-center">
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => { setSelectedSale(sale); setIsModalOpen(true); }} 
-                      className="h-10 w-10 p-0 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all text-slate-300 hover:text-cyan-600"
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-center gap-2">
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => { setSelectedSale(sale); setIsModalOpen(true); }} 
+                          className="h-10 w-10 p-0 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all text-slate-300 hover:text-cyan-600"
+                          title="Ver detalles"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          disabled={isGeneratingPDF}
+                          onClick={async () => {
+                            await downloadExpedientePDF(sale);
+                          }} 
+                          className="h-10 w-10 p-0 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all text-slate-300 hover:text-emerald-600 disabled:opacity-50"
+                          title="Descargar PDF"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </td>
               </tr>
             ))}
@@ -266,11 +323,11 @@ export default function SalesHistoryPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
                 <div className="space-y-1">
                   <p className="text-[9px] font-bold text-slate-400 uppercase">Nombre Completo</p>
-                  <p className="text-sm font-bold uppercase text-slate-700">{selectedSale?.clientName}</p>
+                  <p className="text-sm font-bold uppercase text-slate-700">{selectedSale?.clientName || selectedSale?.clientFull?.name}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[9px] font-bold text-slate-400 uppercase">DNI / NIE</p>
-                  <p className="text-sm font-bold text-cyan-700 font-mono">{selectedSale?.dni}</p>
+                  <p className="text-sm font-bold text-cyan-700 font-mono">{selectedSale?.clientFull?.dni || selectedSale?.dni}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[9px] font-bold text-slate-400 uppercase">Teléfono</p>
@@ -299,11 +356,11 @@ export default function SalesHistoryPage() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                         <p className="text-[9px] font-bold text-slate-400 uppercase">C. Postal</p>
-                        <p className="text-sm font-bold text-slate-600">{selectedSale?.clientFull?.postalCode || "---"}</p>
+                        <p className="text-sm font-bold text-slate-600">{selectedSale?.clientFull?.postalCode}</p>
                     </div>
                     <div className="space-y-1">
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Localidad</p>
-                        <p className="text-sm font-bold text-slate-600">{selectedSale?.clientFull?.city || "---"}</p>
+                        <p className="text-sm font-bold text-slate-600">{selectedSale?.clientFull?.city}</p>
                     </div>
                 </div>
               </div>
@@ -398,12 +455,24 @@ export default function SalesHistoryPage() {
                     </div>
                 </div>
 
-                <Button 
-                    onClick={() => setIsModalOpen(false)} 
-                    className="w-full mt-8 h-14 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-900 font-bold rounded-2xl uppercase text-[10px] tracking-widest transition-all"
-                >
-                  Cerrar Expediente
-                </Button>
+                <div className="flex gap-4 mt-8">
+                    <Button 
+                        disabled={isGeneratingPDF}
+                        onClick={async () => {
+                          await downloadExpedientePDF(selectedSale);
+                        }} 
+                        className="flex-1 h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <Printer className="h-4 w-4" />
+                      Descargar PDF
+                    </Button>
+                    <Button 
+                        onClick={() => setIsModalOpen(false)} 
+                        className="flex-1 h-14 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-900 font-bold rounded-2xl uppercase text-[10px] tracking-widest transition-all"
+                    >
+                      Cerrar Expediente
+                    </Button>
+                </div>
             </div>
           </div>
         </DialogContent>
