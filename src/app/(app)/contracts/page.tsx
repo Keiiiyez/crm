@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { httpClient } from "@/lib/http-client"
 import { 
   Plus, Search, Loader2, CheckCircle2, AlertCircle, Clock, 
   XCircle, Eye, Edit, Trash2, FileText 
@@ -52,10 +53,14 @@ export default function ContractosPage() {
   const loadContratos = React.useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/contratos")
+      const res = await httpClient("/api/contratos")
       if (res.ok) {
         const data = await res.json()
         setContratos(data)
+      } else if (res.status === 403) {
+        toast.error("No tienes permiso para ver contratos")
+      } else {
+        toast.error("Error al cargar contratos")
       }
     } catch (error) {
       toast.error("Error al cargar contratos")
@@ -90,7 +95,7 @@ export default function ContractosPage() {
 
   const handleCambiarEstado = async (contratoId: number, nuevoEstado: string) => {
     try {
-      const res = await fetch(`/api/contratos/${contratoId}`, {
+      const res = await httpClient(`/api/contratos/${contratoId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

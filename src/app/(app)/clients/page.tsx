@@ -28,6 +28,7 @@ import { DataTable } from "@/components/data-table"
 import { columns } from "@/components/clients/columns"
 import { OPERATOR_OPTIONS } from "@/lib/data"
 import type { Client } from "@/lib/definitions"
+import { httpClient } from "@/lib/http-client"
 
 export default function ClientsPage() {
   const [data, setData] = React.useState<Client[]>([])
@@ -40,9 +41,9 @@ export default function ClientsPage() {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const fetchClients = async () => {
+  const httpClients = async () => {
     try {
-      const response = await fetch('/api/clients')
+      const response = await httpClient('/api/clients')
       if (response.ok) {
         const result = await response.json()
         setData(result)
@@ -53,7 +54,7 @@ export default function ClientsPage() {
   }
 
   React.useEffect(() => {
-    fetchClients()
+    httpClients()
   }, [])
 
   const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,7 +162,7 @@ export default function ClientsPage() {
     const method = editingClient?.id ? 'PUT' : 'POST';
 
     try {
-      const response = await fetch(url, {
+      const response = await httpClient(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(finalPayload),
@@ -170,7 +171,7 @@ export default function ClientsPage() {
       if (response.ok) {
         toast.success(editingClient?.id ? "Registro actualizado" : "Cliente guardado correctamente");
         setOpen(false);
-        fetchClients(); 
+        httpClients(); 
       } else {
         const errorData = await response.json();
         toast.error(errorData.error || "Error en el servidor");
@@ -375,7 +376,7 @@ export default function ClientsPage() {
       {}
       <div className="max-w-[1600px] mx-auto px-4">
         <DataTable 
-          columns={columns(handleEdit, fetchClients)} 
+          columns={columns(handleEdit, httpClients)} 
           data={data} 
           filterInputPlaceholder="Filtrar por nombre o documento..." 
         />

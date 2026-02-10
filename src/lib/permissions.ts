@@ -33,7 +33,6 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "view_sales",
     "create_sale",
     "view_clients",
-    "view_commissions", // Ver sus propias comisiones
   ],
 
   COORDINADOR: [
@@ -46,7 +45,6 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "create_client",
     "edit_client",
     "view_contracts",
-    "view_commissions",
     "edit_commission_payment", // Marcar comisiones como pagadas
     "view_operators",
     "view_reports",
@@ -66,7 +64,6 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "create_contract",
     "edit_contract",
     "delete_contract",
-    "view_commissions",
     "edit_commission_payment",
     "view_operators",
     "create_operator_promo",
@@ -89,7 +86,7 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "create_contract",
     "edit_contract",
     "delete_contract",
-    "view_commissions",
+    "view_commissions", // Solo admin puede ver comisiones
     "edit_commission_payment",
     "view_operators",
     "create_operator_promo",
@@ -115,12 +112,13 @@ export function getPermissions(role: UserRole): Permission[] {
 export const roleDescriptions: Record<UserRole, { name: string; description: string }> = {
   ASESOR: {
     name: "Asesor",
-    description: "Registra ventas y ve sus comisiones. Acceso básico.",
+    description: "Registra ventas. Acceso básico.",
   },
   COORDINADOR: {
     name: "Coordinador",
-    description: "Supervisa asesores, gestiona ventas y comisiones. Acceso intermedio.",
+    description: "Supervisa asesores y gestiona ventas. Acceso intermedio.",
   },
+
   GERENTE: {
     name: "Gerente",
     description: "Acceso casi total excepto gestión de usuarios. Control total de operaciones.",

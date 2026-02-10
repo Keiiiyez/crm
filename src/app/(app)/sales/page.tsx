@@ -25,6 +25,7 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { httpClient } from "@/lib/http-client"
 
 const STATUS_OPTIONS = [
   { value: "Pendiente", label: "Pendiente", color: "bg-amber-50 text-amber-600 border-amber-100", icon: Clock },
@@ -43,8 +44,8 @@ export default function SalesHistoryPage() {
   const loadData = React.useCallback(async () => {
     try {
       const [resS, resC] = await Promise.all([
-        fetch('/api2/sales').then(r => r.json()),
-        fetch('/api/clients').then(r => r.json())
+        httpClient('/api2/sales').then(r => r.json()),
+        httpClient('/api/clients').then(r => r.json())
       ]);
       
       const mergedSales = (resS || []).map((sale: any) => {
@@ -68,7 +69,7 @@ export default function SalesHistoryPage() {
     setIsUpdating(true);
     try {
       const sale = sales.find(s => s.id === saleId);
-      const res = await fetch(`/api2/sales/${saleId}`, {
+      const res = await httpClient(`/api2/sales/${saleId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -77,7 +78,7 @@ export default function SalesHistoryPage() {
       if (!res.ok) throw new Error();
 
       if (newStatus === "Tramitada" && sale?.cliente_id) {
-        await fetch(`/api/clients/${sale.cliente_id}`, {
+        await httpClient(`/api/clients/${sale.cliente_id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ operator: sale.operador_destino })

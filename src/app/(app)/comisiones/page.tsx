@@ -1,9 +1,11 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import { 
   Search, Loader2, CheckCircle2, Clock, AlertCircle, 
-  DollarSign, TrendingUp, Eye, FileDownload 
+  DollarSign, Eye
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -32,6 +34,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input as FormInput } from "@/components/ui/input"
 import { Button as FormButton } from "@/components/ui/button"
+import { httpClient } from "@/lib/http-client"
 
 const ESTADO_PAGO_BADGES = {
   PENDIENTE: { color: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock },
@@ -41,9 +44,27 @@ const ESTADO_PAGO_BADGES = {
 }
 
 export default function ComisionesPage() {
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [comisiones, setComisiones] = React.useState<any[]>([])
   const [filteredComisiones, setFilteredComisiones] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
+
+  // Verificar que solo ADMIN pueda ver esta página
+  React.useEffect(() => {
+    if (!authLoading && user?.rol !== "ADMIN") {
+      router.push("/unauthorized")
+    }
+  }, [user, authLoading, router])
+
+  // Si está cargando o no es admin, mostrar loading
+  if (authLoading || user?.rol !== "ADMIN") {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
   const [searchTerm, setSearchTerm] = React.useState("")
   const [estadoPago, setEstadoPago] = React.useState<string>("all")
   const [selectedComision, setSelectedComision] = React.useState<any | null>(null)
@@ -58,7 +79,7 @@ export default function ComisionesPage() {
   const loadComisiones = React.useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/comisiones")
+      const res = await httpClient("/api/comisiones")
       if (res.ok) {
         const data = await res.json()
         setComisiones(data)
@@ -110,7 +131,7 @@ export default function ComisionesPage() {
     if (!selectedComision) return
 
     try {
-      const res = await fetch(`/api/comisiones/${selectedComision.id}`, {
+      const res = await httpClient(`/api/comisiones/${selectedComision.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

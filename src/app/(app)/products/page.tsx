@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { httpClient } from "@/lib/http-client"
 
 const GB_OPTIONS = ["25GB", "50GB", "100GB", "150GB", "ILIMITADOS"]
 const STREAMING_OPTIONS = [
@@ -60,21 +61,23 @@ export default function ProductsPage() {
     setForm(prev => ({ ...prev, name: parts.join(" ").toUpperCase() }))
   }, [form.fiber, form.mobile_main_gb, form.extra_lines, form.tv_package, form.category])
 
-  const fetchProducts = async () => {
+
+
+  const httpClientProducts = async () => {
     try {
-      const res = await fetch('/api2/products')
+      const res = await httpClient('/api2/products')
       const data = await res.json()
       if (res.ok) setProducts(data)
-    } catch (error) { toast.error("Error al cargar") }
+    } catch (error) { toast.error("Error al cargar productos") }
   }
 
-  React.useEffect(() => { fetchProducts() }, [])
+  React.useEffect(() => { httpClientProducts() }, [])
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
     try {
-      const res = await fetch('/api2/products', {
+      const res = await httpClient('/api2/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, price: parseFloat(form.price) }),
@@ -82,15 +85,15 @@ export default function ProductsPage() {
       if (res.ok) {
         toast.success("Producto guardado")
         setForm({ ...form, price: "", extra_lines: [], streaming_services: [], tv_package: "SIN TV" })
-        fetchProducts()
+        httpClientProducts()
       }
     } catch (error) { toast.error("Error") } finally { setIsSaving(false) }
   }
 
   const handleDelete = async (id: number) => {
     if (!confirm("¿Borrar?")) return
-    await fetch(`/api2/products/${id}`, { method: 'DELETE' })
-    fetchProducts()
+    await httpClient(`/api2/products/${id}`, { method: 'DELETE' })
+    httpClientProducts()
   }
 
   return (

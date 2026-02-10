@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Printer, BadgeCheck } from "lucide-react"
+import { httpClient } from "@/lib/http-client"
 
 export default function SaleDetail() {
   const params = useParams()
@@ -12,7 +13,7 @@ export default function SaleDetail() {
   const [sale, setSale] = React.useState<any>(null)
 
   React.useEffect(() => {
-    fetch(`/api2/sales/${params.id}`)
+    httpClient(`/api2/sales/${params.id}`)
       .then(res => res.json())
       .then(data => setSale(data))
   }, [params.id])

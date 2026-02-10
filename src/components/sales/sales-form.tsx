@@ -20,6 +20,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
+import { httpClient } from "@/lib/http-client"
 
 const OPERATOR_OPTIONS = ["Movistar", "Vodafone", "Orange", "Yoigo", "Digi", "MásMóvil"]
 
@@ -71,8 +72,8 @@ export function SalesForm() {
     async function loadData() {
       try {
         const [resClients, resProducts] = await Promise.all([
-          fetch('/api/clients'),
-          fetch('/api2/products')
+          httpClient('/api/clients'),
+          httpClient('/api2/products')
         ]);
         const cData = await resClients.json();
         const pData = await resProducts.json();
@@ -114,7 +115,7 @@ export function SalesForm() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const response = await fetch('/api2/sales', {
+      const response = await httpClient('/api2/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
