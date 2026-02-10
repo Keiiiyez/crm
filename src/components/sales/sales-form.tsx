@@ -71,21 +71,16 @@ export function SalesForm() {
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "servicios" })
 
   React.useEffect(() => {
-    async function loadData() {
+    async function loadClients() {
       try {
-        const [resClients, resProducts] = await Promise.all([
-          httpClient('/api/clients'),
-          httpClient('/api2/products')
-        ]);
+        const resClients = await httpClient('/api/clients');
         const cData = await resClients.json();
-        const pData = await resProducts.json();
         setClients(Array.isArray(cData) ? cData : []);
-        setAvailableProducts(Array.isArray(pData) ? pData : []);
       } catch (error) {
-        toast.error("Error al cargar datos");
+        toast.error("Error al cargar clientes");
       }
     }
-    loadData();
+    loadClients();
 
     // Para ASESOR y COORDINADOR, agregar un servicio vacío por defecto
     if (user?.rol === "ASESOR" || user?.rol === "COORDINADOR") {
@@ -96,6 +91,7 @@ export function SalesForm() {
   }, [user?.rol, fields.length, append])
 
   const watchServicios = form.watch("servicios");
+  const operadorDestino = form.watch("operadorDestino");
   
   const fiscalCalculation = React.useMemo(() => {
     const subtotal = watchServicios.reduce((acc, curr) => acc + (Number(curr.precioBase) || 0), 0);
@@ -121,6 +117,24 @@ export function SalesForm() {
   React.useEffect(() => {
     form.setValue("precioCierre", fiscalCalculation.total);
   }, [fiscalCalculation.total, form]);
+
+  // Cuando cambie la operadora seleccionada, cargar productos filtrados
+  React.useEffect(() => {
+    async function loadProductsByOperator() {
+      try {
+        if (!operadorDestino) {
+          setAvailableProducts([]);
+          return;
+        }
+        const res = await httpClient(`/api2/products?operator=${encodeURIComponent(operadorDestino)}`);
+        const pData = await res.json();
+        setAvailableProducts(Array.isArray(pData) ? pData : []);
+      } catch (error) {
+        toast.error("Error al cargar productos");
+      }
+    }
+    loadProductsByOperator();
+  }, [operadorDestino]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) {
@@ -271,8 +285,23 @@ export function SalesForm() {
             )}
           </div>
 
-          <CardContent className="p-8 space-y-6">
+            <CardContent className="p-8 space-y-6">
+            {/* Selector de Operadora ahora aparece antes de los servicios */}
             <div className="space-y-4">
+              <FormField control={form.control} name="operadorDestino" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-bold text-sky-700 uppercase">Operador Destino</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-12 border-sky-100 bg-white rounded-xl"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {OPERATOR_OPTIONS.map(op => <SelectItem key={op} value={op}>{op}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )} />
+
               {fields.map((field, index) => (
                 <div key={field.id} className="grid grid-cols-12 gap-4 items-end bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
                   <div className="col-span-12 md:col-span-8 space-y-3">
@@ -310,19 +339,6 @@ export function SalesForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-100">
               <div className="space-y-5">
-                <FormField control={form.control} name="operadorDestino" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-bold text-sky-700 uppercase">Operador Destino</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-12 border-sky-100 bg-white rounded-xl"><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {OPERATOR_OPTIONS.map(op => <SelectItem key={op} value={op}>{op}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )} />
                 <div className="space-y-2">
                   <FormLabel className="text-xs font-bold text-sky-700 uppercase">Observaciones</FormLabel>
                   <Textarea {...form.register("observaciones")} className="border-sky-50 rounded-xl min-h-[100px]" placeholder="Notas..." />

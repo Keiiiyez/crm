@@ -9,11 +9,19 @@ const dbConfig = {
   database: "crm", 
 };
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const connection = await mysql.createConnection(dbConfig);
-    // Obtenemos todos los registros ordenados por el más reciente
-    const [rows] = await connection.execute("SELECT * FROM products ORDER BY id DESC");
+    // Permitir filtrar por operadora usando ?operator=VODAFONE
+    const operator = req.nextUrl.searchParams.get('operator');
+    let rows: any = [];
+    if (operator) {
+      const [r] = await connection.execute("SELECT * FROM products WHERE operator = ? ORDER BY id DESC", [operator]);
+      rows = r;
+    } else {
+      const [r] = await connection.execute("SELECT * FROM products ORDER BY id DESC");
+      rows = r;
+    }
     await connection.end();
     return NextResponse.json(rows);
   } catch (error) {

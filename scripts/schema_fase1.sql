@@ -240,3 +240,24 @@ DESCRIBE comisiones_ventas;
 DESCRIBE auditoria_cambios;
 DESCRIBE usuarios;
 DESCRIBE cliente_historial_servicios;
+
+-- Tabla de productos/servicios (catálogo)
+CREATE TABLE IF NOT EXISTS products (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(255) NOT NULL,
+  price DECIMAL(10,2) DEFAULT 0,
+  category VARCHAR(50),
+  operator VARCHAR(100),
+  type VARCHAR(100),
+  fiber VARCHAR(50),
+  landline TINYINT(1) DEFAULT 0,
+  mobile_main_gb VARCHAR(50),
+  mobile_main_speed VARCHAR(50),
+  extra_lines JSON,
+  tv_package VARCHAR(100) DEFAULT 'SIN TV',
+  streaming_services JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_operator (operator)
+);
+
