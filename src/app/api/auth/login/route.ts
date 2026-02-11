@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: Request) {
   try {
@@ -12,7 +13,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Buscar usuario en BD
     const [rows]: any = await db.query(
       `SELECT id, nombre, email, rol, operadora_asignada, password 
        FROM usuarios 
@@ -29,14 +29,14 @@ export async function POST(request: Request) {
 
     const user = rows[0];
 
-    // Validar contraseña contra la BD
-    // NOTA: En producción, usar bcrypt.compare(password, user.password)
-    if (password !== user.password) {
-      return NextResponse.json(
-        { error: "Contraseña incorrecta" },
-        { status: 401 }
-      );
-    }
+
+ const passwordHash = await bcrypt.compare(password, user.password_hash)
+if (!passwordHash) {
+  return NextResponse.json(
+    { error: "Contraseña incorrecta" },
+    { status: 401 }
+  );
+}
 
     // Registrar login en auditoría
     await db.query(

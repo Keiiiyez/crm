@@ -34,7 +34,7 @@ const STREAMING_OPTIONS = [
 const OPERATOR_THEMES: Record<string, { bg: string, text: string, border: string, shadow: string }> = {
   VODAFONE: { bg: "bg-[#E60000]", text: "text-white", border: "border-[#E60000]", shadow: "shadow-red-500/20" },
   ORANGE: { bg: "bg-[#FF7900]", text: "text-white", border: "border-[#FF7900]", shadow: "shadow-orange-500/20" },
-  MOVISTAR: { bg: "bg-[#019DF4]", text: "text-white", border: "border-[#019DF4]", shadow: "shadow-blue-500/20" },
+  YOIGO: { bg: "bg-[#D119AE]", text: "text-white", border: "border-[#D119AE]", shadow: "shadow-purple-500/20" },
   DIGI: { bg: "bg-[#005ABF]", text: "text-white", border: "border-[#005ABF]", shadow: "shadow-blue-700/20" },
   MASMOVIL: { bg: "bg-[#FFD900]", text: "text-black", border: "border-[#FFD900]", shadow: "shadow-yellow-500/20" },
 }
