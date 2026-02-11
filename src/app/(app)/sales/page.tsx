@@ -182,9 +182,18 @@ export default function SalesHistoryPage() {
               {selectedDate ? format(selectedDate, "PPP", { locale: es }) : "Filtrar por Fecha"}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-2xl overflow-hidden" align="end">
-            <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} locale={es} />
-          </PopoverContent>
+         <PopoverContent 
+  className="w-[310px] p-4 border-none shadow-[0_20px_50px_rgba(0,0,0,0.2)] rounded-3xl bg-white" 
+  align="end"
+  sideOffset={10}
+>
+  <Calendar 
+    mode="single" 
+    selected={selectedDate} 
+    onSelect={setSelectedDate} 
+    locale={es} 
+  />
+</PopoverContent>
         </Popover>
       </div>
 

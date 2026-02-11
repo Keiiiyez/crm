@@ -59,7 +59,7 @@ export default function LoginPage() {
               IVHAES <span className="text-cyan-500">CRM</span>
             </CardTitle>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">
-              Central de Operaciones
+              Centro de Gestión y Operaciones comerciales
             </p>
           </div>
         </CardHeader>
@@ -126,7 +126,7 @@ export default function LoginPage() {
               ) : (
                 <>
                   <LogIn className="mr-2 h-4 w-4" />
-                  Entrar al Sistema
+                  Entrar
                 </>
               )}
             </Button>

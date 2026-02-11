@@ -81,17 +81,27 @@ export default function ClientsPage() {
           return "";
         };
 
-        const rawIban = String(findValueNextTo(["No. DE CUENTA", "IBAN"])).trim().replace(/\s/g, "");
+        const findValueInRow = (labels: string[], row: any[]) => {
+          for (let c = 0; c < row.length; c++) {
+            const cellValue = String(row[c] || "").toUpperCase();
+            if (labels.some(label => cellValue.includes(label.toUpperCase()))) {
+              return row[c + 1] || "";
+            }
+          }
+          return "";
+        };
+
+        const rawIban = String(findValueNextTo(["No. DE CUENTA", "IBAN", "Nº cuenta (20 Digitos)"]) || findValueInRow(["No. DE CUENTA", "IBAN", "Nº cuenta (20 Digitos)"], rows[0])) || "";
 
         const excelData: any = {
           name: String(findValueNextTo(["DENOMINACION SOCIAL", "TITULAR", "NOMBRE"])).trim(),
-          dni: String(findValueNextTo(["CIF / NIF", "NIF/NIE", "DNI"])).trim().toUpperCase(),
+          dni: String(findValueNextTo(["CIF / NIF", "NIF/NIE", "DNI", "NIF/NIE "])).trim().toUpperCase(),
           email: String(findValueNextTo(["E-MAIL", "CORREO"])).trim().toLowerCase(),
           address: String(findValueNextTo(["DIRECCION", "DOMICILIO SOCIAL"])).trim(),
           city: String(findValueNextTo(["LOCALIDAD", "POBLACION"])).trim(),
           province: String(findValueNextTo(["PROVINCIA"])).trim(),
           postalCode: String(findValueNextTo(["CODIGO POSTAL", "C.P."])).trim(),
-          phone: String(findValueNextTo(["TELEFONO DE CONTACTO", "MOVIL", "CONTACTO"])).trim(),
+          phone: String(findValueNextTo(["TELEFONO DE CONTACTO", "MOVIL", "CONTACTO", "TELEFONO CONTACTO"])).trim(),
           iban: rawIban,
           operator: String(findValueNextTo(["OPERADOR", "COMPAÑÍA", "OPERADOR DONANTE"])).trim(),
           nationality: String(findValueNextTo(["NACIONALIDAD"])).trim(),
@@ -231,7 +241,7 @@ export default function ClientsPage() {
                     <DialogDescription className="text-slate-400 font-bold text-xs uppercase mt-3 flex items-center gap-2">
                       {pendingSale ? (
                         <span className="bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/20">
-                          ✨ Venta automática detectada: {pendingSale.total}€
+                          Venta automática detectada: {pendingSale.total}€
                         </span>
                       ) : "Verifique la integridad de los datos antes de guardar."}
                     </DialogDescription>

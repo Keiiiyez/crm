@@ -113,7 +113,7 @@ export async function generateExpedientePDF(sale: any, contract: any) {
         </div>
 
         <div style="border-top: 2px dashed #e2e8f0; padding-top: 15px; text-align: center;">
-          <p style="font-size: 9px; color: #94a3b8; margin: 0;">Documento generado automáticamente desde el sistema CRM</p>
+          <p style="font-size: 9px; color: #94a3b8; margin: 0;">Documento generado automáticamente</p>
         </div>
       </div>
     `;
