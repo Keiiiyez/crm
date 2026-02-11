@@ -271,7 +271,7 @@ export default function ClientsPage() {
                           <Input name="name" defaultValue={editingClient?.name || ""} required className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">DNI / CIF</Label>
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">DNI / CIF / NIE / NIF</Label>
                           <Input name="dni" defaultValue={editingClient?.dni || ""} required className="bg-slate-50 border-none rounded-2xl font-mono uppercase font-black text-cyan-600 h-12" />
                         </div>
                         <div className="space-y-2">
@@ -388,7 +388,7 @@ export default function ClientsPage() {
         <DataTable 
           columns={columns(handleEdit, httpClients)} 
           data={data} 
-          filterInputPlaceholder="Filtrar por nombre o documento..." 
+          filterInputPlaceholder="Filtrar por nombre o DNI..." 
         />
       </div>
 
