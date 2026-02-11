@@ -241,7 +241,7 @@ export default function ClientsPage() {
                     <DialogDescription className="text-slate-400 font-bold text-xs uppercase mt-3 flex items-center gap-2">
                       {pendingSale ? (
                         <span className="bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/20">
-                          Venta automática detectada: {pendingSale.total}€
+                          Venta detectada: {pendingSale.total}€
                         </span>
                       ) : "Verifique la integridad de los datos antes de guardar."}
                     </DialogDescription>
