@@ -30,12 +30,11 @@ export type Permission =
 // Mapeo de permisos por rol
 export const rolePermissions: Record<UserRole, Permission[]> = {
   ASESOR: [
-    // Básico: solo vender y ver sus datos
+    // Básico para registrar ventas y ver clientes asignados
     "view_dashboard",
     "view_sales",
     "create_sale",
     "view_clients",
-    "view_contracts", // Puede ver contratos que genera
   ],
 
   COORDINADOR: [
@@ -48,7 +47,6 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "create_client",
     "edit_client",
     "view_contracts",
-    "edit_commission_payment", // Marcar comisiones como pagadas
     "view_operators",
     "view_audit", // Puede ver auditoría
     "view_reports",
@@ -68,7 +66,6 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "create_contract",
     "edit_contract",
     "delete_contract",
-    "edit_commission_payment",
     "view_operators",
     "create_operator_promo",
     "edit_operator_promo",
