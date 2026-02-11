@@ -33,6 +33,7 @@ const navLinks = [
   { href: "/contracts", icon: Briefcase, label: "Contratos" },
   { href: "/products", icon: Package, label: "Servicios" },
   { href: "/audit", icon: AlertCircle, label: "Auditoría" },
+  { href: "/users", icon: FileText, label: "Usuarios" },
   {
     href: "/inform",
     icon: UserCog,
