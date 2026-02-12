@@ -25,7 +25,9 @@ export type Permission =
   | "create_users"
   | "edit_users"
   | "create_product"
-  | "edit_product";
+  | "edit_product"
+  | "view_users"
+  | "delete_product";
 
 // Mapeo de permisos por rol
 export const rolePermissions: Record<UserRole, Permission[]> = {
@@ -35,6 +37,7 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "view_sales",
     "create_sale",
     "view_clients",
+    
   ],
 
   COORDINADOR: [

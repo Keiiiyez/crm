@@ -23,7 +23,7 @@ export function ProtectedAuditRoute({ children }: ProtectedAuditRouteProps) {
     }
 
     if (!hasPermission(user.rol, "view_audit")) {
-      toast.error("No tienes permiso para ver la auditoría")
+      toast.error("No tienes permiso para ver este componente")
       router.push("/dashboard")
       return
     }

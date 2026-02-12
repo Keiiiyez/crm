@@ -30,7 +30,7 @@ const navLinks = [
     subLinks: [{ href: "/sales/new", label: "Nueva Venta" }],
   },
   { href: "/clients", icon: Users, label: "Clientes" },
-  { href: "/contracts", icon: Briefcase, label: "Contratos" },
+  //{ href: "/contracts", icon: Briefcase, label: "Contratos" },
   { href: "/products", icon: Package, label: "Servicios" },
   { href: "/audit", icon: AlertCircle, label: "Auditoría" },
   { href: "/users", icon: FileText, label: "Usuarios" },
