@@ -4,7 +4,7 @@ import * as React from "react"
 import { 
   UserPlus, Shield, Loader2, Lock, CheckCircle2, 
   XCircle, Search, Users2Icon, AlertCircle, 
-  ShieldCheck, ShieldAlert
+  ShieldCheck, ShieldAlert, UserCircle2
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 // Importaciones de tu lógica de sistema
 import { httpClient } from "@/lib/http-client"
 import { useAuth } from "@/lib/auth-context"
-import { ProtectedAuditRoute } from "@/components/protected-audit-route" // <--- Mismo protector que Auditoría
+import { ProtectedAuditRoute } from "@/components/protected-audit-route"
 import { UserRole, rolePermissions, roleDescriptions, hasPermission } from "@/lib/permissions"
 
 export default function UsersManagementPage() {
@@ -37,6 +37,11 @@ function UsersContent() {
   const [searchTerm, setSearchTerm] = React.useState("")
   const [isAddOpen, setIsAddOpen] = React.useState(false)
   const [newUser, setNewUser] = React.useState({ nombre: "", password: "" })
+
+  // Filtrar quiénes pueden ser coordinadores para el selector
+  const coordinadoresDisponibles = React.useMemo(() => {
+    return users.filter(u => u.rol === "COORDINADOR" || u.rol === "ADMIN")
+  }, [users])
 
   const loadData = React.useCallback(async () => {
     setLoading(true)
@@ -65,7 +70,10 @@ function UsersContent() {
       })
       if (!res.ok) throw new Error()
       
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, [field === 'role' ? 'rol' : field]: value } : u))
+      // Actualizamos localmente: si el campo es 'role' en JS, en el estado lo mapeamos a 'rol'
+      setUsers(prev => prev.map(u => 
+        u.id === userId ? { ...u, [field === 'role' ? 'rol' : field]: value } : u
+      ))
       toast.success("Usuario actualizado correctamente")
     } catch (e) {
       toast.error("No se pudo realizar el cambio")
@@ -142,7 +150,7 @@ function UsersContent() {
       </div>
 
       {/* Buscador */}
-      <Card className="border-none shadow-sm rounded-[2rem] bg-white max-w-[1600px] mx-auto">
+      <Card className="border-none shadow-sm rounded-[2rem] bg-white max-w-[1600px] mx-auto overflow-hidden">
         <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -156,21 +164,22 @@ function UsersContent() {
         </CardContent>
       </Card>
 
-      {/* Tabla Estilo Auditoría */}
+      {/* Tabla Principal */}
       <Card className="border-none shadow-sm rounded-[2rem] bg-white max-w-[1600px] mx-auto overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-b border-slate-100 bg-slate-50/50 hover:bg-slate-50/50">
                 <TableHead className="h-14 px-8 text-[9px] font-black text-slate-400 uppercase tracking-widest">Usuario</TableHead>
-                <TableHead className="h-14 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</TableHead>
                 <TableHead className="h-14 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Rol Asignado</TableHead>
+                <TableHead className="h-14 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Asignación (Coord)</TableHead>
+                <TableHead className="h-14 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</TableHead>
                 <TableHead className="h-14 px-8 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Privilegios</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={4} className="h-40 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto text-slate-200" /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="h-40 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto text-slate-200" /></TableCell></TableRow>
               ) : filteredUsers.map((user) => (
                 <TableRow key={user.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
                   <TableCell className="px-8 py-4">
@@ -181,25 +190,14 @@ function UsersContent() {
                       <span className="font-bold text-slate-700 tracking-tight">{user.nombre}</span>
                     </div>
                   </TableCell>
-                  
-                  <TableCell className="text-center">
-                    <Select defaultValue={user.estado} onValueChange={(val) => handleUpdate(user.id, 'estado', val)}>
-                      <SelectTrigger className={`mx-auto w-28 h-8 rounded-lg text-[9px] font-black uppercase border-none shadow-sm ${user.estado === 'ACTIVO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ACTIVO">ACTIVO</SelectItem>
-                        <SelectItem value="INACTIVO">INACTIVO</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
 
+                  {/* ROL */}
                   <TableCell className="text-center">
                     <Select defaultValue={user.rol} onValueChange={(val) => handleUpdate(user.id, 'role', val)}>
-                      <SelectTrigger className="mx-auto w-32 h-8 rounded-lg text-[9px] font-black uppercase bg-slate-100 border-none shadow-sm text-slate-600">
+                      <SelectTrigger className="mx-auto w-32 h-8 rounded-lg text-[9px] font-black uppercase bg-slate-100 border-none shadow-sm text-slate-600 font-bold">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="font-bold">
                         {Object.keys(rolePermissions).map(role => (
                           <SelectItem key={role} value={role}>{role}</SelectItem>
                         ))}
@@ -207,6 +205,45 @@ function UsersContent() {
                     </Select>
                   </TableCell>
 
+                  {/* ASIGNACIÓN COORDINADOR */}
+                  <TableCell className="text-center">
+                    {user.rol === "ASESOR" ? (
+                      <Select 
+                        value={String(user.coordinadorId || "0")} 
+                        onValueChange={(val) => handleUpdate(user.id, 'coordinadorId', parseInt(val))}
+                      >
+                        <SelectTrigger className="mx-auto w-44 h-8 rounded-lg text-[9px] font-black uppercase bg-blue-50 text-blue-700 border-none shadow-sm">
+                          <UserCircle2 className="h-3 w-3 mr-1" />
+                          <SelectValue placeholder="Sin Asignar" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-none shadow-2xl font-bold">
+                          <SelectItem value="0" className="text-[10px]">SIN COORDINADOR</SelectItem>
+                          {coordinadoresDisponibles.map((c) => (
+                            <SelectItem key={c.id} value={String(c.id)} className="text-[10px]">
+                              {c.nombre.toUpperCase()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant="outline" className="text-[8px] opacity-30 border-slate-300">N/A Jerarquía</Badge>
+                    )}
+                  </TableCell>
+                  
+                  {/* ESTADO */}
+                  <TableCell className="text-center">
+                    <Select defaultValue={user.estado} onValueChange={(val) => handleUpdate(user.id, 'estado', val)}>
+                      <SelectTrigger className={`mx-auto w-28 h-8 rounded-lg text-[9px] font-black uppercase border-none shadow-sm ${user.estado === 'ACTIVO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="font-bold">
+                        <SelectItem value="ACTIVO">ACTIVO</SelectItem>
+                        <SelectItem value="INACTIVO">INACTIVO</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+
+                  {/* ACCIONES / MATRIZ */}
                   <TableCell className="px-8 text-right">
                     <Dialog>
                       <DialogTrigger asChild>
@@ -222,8 +259,8 @@ function UsersContent() {
                           </div>
                           <DialogTitle className="text-2xl font-black uppercase tracking-tighter">{user.nombre}</DialogTitle>
                           <Badge className="bg-slate-900 text-white border-none px-4 py-1 rounded-full text-[9px] tracking-[0.2em]">{user.rol}</Badge>
-                          <p className="text-xs text-slate-400 italic mt-3 px-6">
-                            "{roleDescriptions[user.rol as UserRole]?.description}"
+                          <p className="text-xs text-slate-400 italic mt-3 px-6 leading-relaxed">
+                            "{roleDescriptions[user.rol as UserRole]?.description || 'Sin descripción de rol'}"
                           </p>
                         </DialogHeader>
 
@@ -242,6 +279,7 @@ function UsersContent() {
                           <div className="space-y-3">
                             <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] border-b pb-2">Matriz de Acceso Real-Time</p>
                             <div className="grid grid-cols-1 gap-2">
+                              {/* Usamos ADMIN como referencia de todos los permisos posibles */}
                               {rolePermissions["ADMIN"].map((perm) => {
                                 const hasIt = rolePermissions[user.rol as UserRole]?.includes(perm);
                                 return (

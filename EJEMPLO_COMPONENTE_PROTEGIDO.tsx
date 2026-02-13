@@ -118,7 +118,7 @@ export function DashboardPages() {
           <Card className="border-l-4 border-l-yellow-500">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                💰 Comisiones
+                 Comisiones
               </CardTitle>
             </CardHeader>
             <CardContent>

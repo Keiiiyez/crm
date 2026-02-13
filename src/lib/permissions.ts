@@ -27,7 +27,9 @@ export type Permission =
   | "create_product"
   | "edit_product"
   | "view_users"
-  | "delete_product";
+  | "delete_product"
+  | "delete_users"
+  | "delete_operator_promo";
 
 // Mapeo de permisos por rol
 export const rolePermissions: Record<UserRole, Permission[]> = {
@@ -41,7 +43,7 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
   ],
 
   COORDINADOR: [
-    // Coordinador: supervisa asesores y gestiona ventas (sin crear servicios/productos)
+    // coordinador: acceso a todo lo del asesor + supervisión y gestión de ventas y clientes
     "view_dashboard",
     "view_sales",
     "create_sale",
@@ -92,7 +94,7 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "create_contract",
     "edit_contract",
     "delete_contract",
-    "view_commissions", // Solo admin puede ver comisiones
+    "view_commissions", 
     "edit_commission_payment",
     "view_operators",
     "create_operator_promo",

@@ -8,13 +8,12 @@ const dbConfig = {
   database: "crm",
 };
 
-// Crear el pool fuera para reutilizar conexiones
 const pool = mysql.createPool(dbConfig);
 
 export async function GET() {
   try {
     const [rows] = await pool.execute(`
-      SELECT id, nombre, email, rol, coordinador_id, estado, comision_base 
+      SELECT id, nombre, email, rol, coordinador_id as coordinadorId, estado, comision_base 
       FROM usuarios 
       ORDER BY FIELD(estado, 'ACTIVO', 'PERMISO', 'INACTIVO'), nombre ASC
     `);
@@ -28,12 +27,9 @@ export async function POST(request: NextRequest) {
   let connection;
   try {
     const { nombre, password } = await request.json();
-    const pool = mysql.createPool(dbConfig);
     connection = await pool.getConnection();
-
     await connection.beginTransaction();
 
-    // 1. Crear el email automático e insertar el usuario
     const emailInterno = `${nombre.toLowerCase().replace(/\s+/g, '.')}@crm.local`;
     
     const [result]: any = await connection.execute(
@@ -43,26 +39,15 @@ export async function POST(request: NextRequest) {
 
     const newUserId = result.insertId;
 
-    // 2. Registrar en Auditoría la CREACIÓN
-    // Guardamos los datos iniciales en valor_nuevo para tener registro de cómo empezó
     await connection.execute(
       `INSERT INTO auditoria_cambios 
       (tabla_modificada, registro_id, tipo_cambio, valor_anterior, valor_nuevo, usuario_nombre, razon_cambio) 
       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        'usuarios', 
-        newUserId, 
-        'INSERT', 
-        null, // No hay valor anterior porque es nuevo
-        JSON.stringify({ nombre, email: emailInterno, rol: 'ASESOR', estado: 'ACTIVO' }), 
-        'Sistema Admin', 
-        `Creación de nuevo usuario: ${nombre}`
-      ]
+      ['usuarios', newUserId, 'INSERT', null, JSON.stringify({ nombre, rol: 'ASESOR' }), 'Sistema Admin', `Creación: ${nombre}`]
     );
 
     await connection.commit();
     return NextResponse.json({ success: true, userId: newUserId });
-
   } catch (error: any) {
     if (connection) await connection.rollback();
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -78,37 +63,44 @@ export async function PATCH(request: NextRequest) {
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
-    const dbField = field === 'role' ? 'rol' : field;
+    // Mapeo de nombres JS a nombres DB
+    const mapping: Record<string, string> = {
+      role: 'rol',
+      coordinadorId: 'coordinador_id',
+      estado: 'estado',
+      password: 'password'
+    };
 
-    // 1. Obtener datos actuales para la auditoría (evitar error si es password por privacidad)
-    const [oldData]: any = await connection.execute(
-      `SELECT ${dbField === 'password' ? 'id' : dbField}, nombre FROM usuarios WHERE id = ?`, 
-      [userId]
+    const dbField = mapping[field] || field;
+
+    // 1. Obtener datos viejos para auditoría
+    const [oldDataRows]: any = await connection.execute(
+      `SELECT * FROM usuarios WHERE id = ?`, [userId]
     );
+    if (oldDataRows.length === 0) throw new Error("Usuario no encontrado");
+    const oldUser = oldDataRows[0];
 
-    // 2. Ejecutar la actualización
+    // 2. Limpiar valor para SQL (manejo de nulos)
+    let finalValue = value;
+    if (dbField === 'coordinador_id' && (value === 0 || value === "0" || value === null)) {
+      finalValue = null;
+    }
+
+    // 3. Ejecutar Update
     await connection.execute(
       `UPDATE usuarios SET ${dbField} = ? WHERE id = ?`,
-      [value === "null" ? null : value, userId]
+      [finalValue, userId]
     );
 
-    // 3. Registrar en Auditoría
-    const valorViejo = dbField === 'password' ? '***' : oldData[0][dbField];
-    const valorNuevo = dbField === 'password' ? '***' : value;
+    // 4. Auditoría
+    const valorViejo = dbField === 'password' ? '***' : oldUser[dbField];
+    const valorNuevo = dbField === 'password' ? '***' : finalValue;
 
     await connection.execute(
       `INSERT INTO auditoria_cambios 
       (tabla_modificada, registro_id, tipo_cambio, valor_anterior, valor_nuevo, usuario_nombre, razon_cambio) 
       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        'usuarios', 
-        userId, 
-        'UPDATE', 
-        JSON.stringify({ [dbField]: valorViejo }), 
-        JSON.stringify({ [dbField]: valorNuevo }), 
-        'Sistema Admin', 
-        `Cambio de ${dbField} para ${oldData[0].nombre}`
-      ]
+      ['usuarios', userId, 'UPDATE', JSON.stringify({[dbField]: valorViejo}), JSON.stringify({[dbField]: valorNuevo}), 'Sistema Admin', `Cambio ${dbField}`]
     );
 
     await connection.commit();
@@ -119,5 +111,4 @@ export async function PATCH(request: NextRequest) {
   } finally {
     if (connection) connection.release();
   }
-  
 }
