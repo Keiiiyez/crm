@@ -11,7 +11,9 @@ import {
   CreditCard, 
   Fingerprint,
   Calendar,
-  Building2
+  Building2,
+  CheckCircle2,
+  XCircle
 } from "lucide-react"
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
@@ -23,12 +25,16 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 
 import { DataTable } from "@/components/data-table"
 import { columns } from "@/components/clients/columns"
 import { OPERATOR_OPTIONS } from "@/lib/data"
 import type { Client } from "@/lib/definitions"
 import { httpClient } from "@/lib/http-client"
+
+// Asegúrate de tener las funciones actualizadas con BigInt() en este path
+import { validateSpanishID, validateIBAN, formatIBAN } from "@/lib/validators"
 
 export default function ClientsPage() {
   const [data, setData] = React.useState<Client[]>([])
@@ -37,7 +43,16 @@ export default function ClientsPage() {
   const [editingClient, setEditingClient] = React.useState<any | null>(null)
   const [operator, setOperator] = React.useState<string>("")
   const [ibanValue, setIbanValue] = React.useState("")
+  const [dniValue, setDniValue] = React.useState("")
   const [pendingSale, setPendingSale] = React.useState<any>(null)
+  
+  // Nuevo: para mostrar el banco que detectamos automáticamente
+  const [detectedBank, setDetectedBank] = React.useState<string>("")
+
+  const [validationErrors, setValidationErrors] = React.useState({
+    dni: false,
+    iban: false
+  })
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -56,6 +71,48 @@ export default function ClientsPage() {
   React.useEffect(() => {
     httpClients()
   }, [])
+
+  
+  const handleDniChange = (val: string) => {
+  let upper = val.toUpperCase().trim();
+  
+  
+  if (upper.length === 8 && /[A-Z]$/.test(upper)) {
+    upper = "0" + upper;
+  }
+
+  setDniValue(upper);
+
+  
+  if (upper.length >= 9) {
+    const isValid = validateSpanishID(upper);
+    setValidationErrors(prev => ({ ...prev, dni: !isValid }));
+  } else {
+    setValidationErrors(prev => ({ ...prev, dni: false }));
+  }
+};
+
+  const handleIbanChange = (val: string) => {
+    const formatted = formatIBAN(val);
+    setIbanValue(formatted);
+    const cleanIban = formatted.replace(/\s/g, '');
+    
+    if (cleanIban.length >= 15) {
+      
+      const result = validateIBAN(cleanIban);
+      setValidationErrors(prev => ({ ...prev, iban: !result.isValid }));
+      
+      
+      if (result.isValid && result.bankName) {
+        setDetectedBank(result.bankName);
+      } else {
+        setDetectedBank("");
+      }
+    } else {
+      setValidationErrors(prev => ({ ...prev, iban: false }));
+      setDetectedBank("");
+    }
+  };
 
   const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -92,10 +149,11 @@ export default function ClientsPage() {
         };
 
         const rawIban = String(findValueNextTo(["No. DE CUENTA", "IBAN", "Nº cuenta (20 Digitos)"]) || findValueInRow(["No. DE CUENTA", "IBAN", "Nº cuenta (20 Digitos)"], rows[0])) || "";
+        const rawDni = String(findValueNextTo(["CIF / NIF", "NIF/NIE", "DNI", "NIF/NIE "])).trim().toUpperCase();
 
         const excelData: any = {
           name: String(findValueNextTo(["DENOMINACION SOCIAL", "TITULAR", "NOMBRE"])).trim(),
-          dni: String(findValueNextTo(["CIF / NIF", "NIF/NIE", "DNI", "NIF/NIE "])).trim().toUpperCase(),
+          dni: rawDni,
           email: String(findValueNextTo(["E-MAIL", "CORREO"])).trim().toLowerCase(),
           address: String(findValueNextTo(["DIRECCION", "DOMICILIO SOCIAL"])).trim(),
           city: String(findValueNextTo(["LOCALIDAD", "POBLACION"])).trim(),
@@ -127,7 +185,8 @@ export default function ClientsPage() {
 
         setEditingClient(excelData);
         setOperator(excelData.operator || "");
-        setIbanValue(rawIban);
+        handleDniChange(rawDni); 
+        handleIbanChange(rawIban); 
         setOpen(true);
 
         toast.success("Excel procesado con éxito");
@@ -142,28 +201,33 @@ export default function ClientsPage() {
   const handleEdit = (client: any) => {
     setEditingClient(client)
     setOperator(client.operator || "") 
-    setIbanValue(client.iban || "")
+    handleDniChange(client.dni || "")
+    handleIbanChange(client.iban || "")
     setPendingSale(null) 
     setOpen(true)
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    
+    if (validationErrors.dni || validationErrors.iban) {
+      return toast.error("Por favor, corrija los datos inválidos");
+    }
+
     const formData = new FormData(event.currentTarget);
     const clientFields = Object.fromEntries(formData.entries());
-
-    if (ibanValue.length !== 24) {
-      return toast.error("El IBAN debe tener 24 caracteres");
-    }
 
     setIsSubmitting(true);
 
     const finalPayload = {
       client: {
         ...clientFields,
+        dni: dniValue,
+        iban: ibanValue.replace(/\s/g, ""),
+        // Si detectamos el banco automáticamente, lo usamos, si no lo que ponga el input
+        bankName: detectedBank || clientFields.bankName,
         id: editingClient?.id || undefined, 
         operator: operator,
-        iban: ibanValue,
       },
       sale: pendingSale && pendingSale.total > 0 ? pendingSale : null
     };
@@ -196,7 +260,6 @@ export default function ClientsPage() {
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 lg:p-12 space-y-10">
       
-      {}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 max-w-[1600px] mx-auto">
         <div className="flex items-center gap-5">
           <div className="h-14 w-14 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
@@ -204,7 +267,7 @@ export default function ClientsPage() {
           </div>
           <div>
             <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
-              Cartera <span className="text-slate-400 font-light">de</span> Clientes
+              Lista <span className="text-slate-400 font-light">de</span> Clientes
             </h1>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-0.5">Gestión de identidades y facturación</p>
           </div>
@@ -224,7 +287,7 @@ export default function ClientsPage() {
             <DialogTrigger asChild>
               <Button 
                 className="h-14 bg-slate-900 hover:bg-cyan-600 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl px-8 shadow-xl shadow-slate-200 transition-all border-none"
-                onClick={() => { setEditingClient(null); setPendingSale(null); setOperator(""); setIbanValue(""); }}
+                onClick={() => { setEditingClient(null); setPendingSale(null); setOperator(""); setIbanValue(""); setDniValue(""); setDetectedBank(""); }}
               >
                  <PlusCircle className="h-4 w-4 mr-2" /> Nuevo Registro
               </Button>
@@ -234,7 +297,7 @@ export default function ClientsPage() {
               <form onSubmit={handleSubmit}>
                 <div className="bg-slate-900 p-10 text-white relative">
                   <DialogHeader>
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 mb-2">Expediente de Identidad</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400 mb-2">Datos del Cliente</p>
                     <DialogTitle className="text-4xl font-black tracking-tighter uppercase italic">
                       {editingClient?.id ? "Actualizar Ficha" : "Registrar Cliente"}
                     </DialogTitle>
@@ -249,18 +312,18 @@ export default function ClientsPage() {
                 </div>
 
                 <div className="p-10 space-y-10 bg-white overflow-y-auto max-h-[70vh]">
-                  {ibanValue && ibanValue.length !== 24 && (
+                  {/* ALERTA SI HAY ERRORES MATEMÁTICOS */}
+                  {(validationErrors.dni || validationErrors.iban) && (
                     <Alert className="bg-red-50 border-none rounded-2xl py-4 px-6 flex items-center">
                       <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
                       <AlertDescription className="text-[11px] font-black uppercase text-red-600">
-                        IBAN Incorrecto: Faltan {24 - ibanValue.length} caracteres.
+                        Atención: El DNI o el IBAN ingresados no superan la validación matemática oficial.
                       </AlertDescription>
                     </Alert>
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                     
-                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
                         <Fingerprint size={14}/> Identidad
@@ -272,7 +335,22 @@ export default function ClientsPage() {
                         </div>
                         <div className="space-y-2">
                           <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">DNI / CIF / NIE / NIF</Label>
-                          <Input name="dni" defaultValue={editingClient?.dni || ""} required className="bg-slate-50 border-none rounded-2xl font-mono uppercase font-black text-cyan-600 h-12" />
+                          <div className="relative">
+                            <Input 
+                              value={dniValue} 
+                              onChange={(e) => handleDniChange(e.target.value)}
+                              required 
+                              className={cn(
+                                "bg-slate-50 border-2 rounded-2xl font-mono uppercase font-black h-12 transition-all",
+                                validationErrors.dni ? "border-red-200 bg-red-50 text-red-600" : "border-transparent text-cyan-600"
+                              )} 
+                            />
+                            {dniValue.length >= 9 && (
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                {validationErrors.dni ? <XCircle className="text-red-500 h-5 w-5" /> : <CheckCircle2 className="text-emerald-500 h-5 w-5" />}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="space-y-2">
                           <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Fecha de Nacimiento</Label>
@@ -291,7 +369,6 @@ export default function ClientsPage() {
                       </div>
                     </div>
 
-                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
                         <MapPin size={14}/> Ubicación & Contacto
@@ -328,7 +405,6 @@ export default function ClientsPage() {
                       </div>
                     </div>
 
-                    {}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
                         <CreditCard size={14}/> Datos de Facturación
@@ -347,16 +423,36 @@ export default function ClientsPage() {
                         </div>
                         <div className="space-y-2">
                           <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Entidad Bancaria</Label>
-                          <Input name="bankName" placeholder="Ej: BBVA, Santander..." defaultValue={editingClient?.bankName || ""} className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
+                          <div className="relative">
+                            <Input 
+                              name="bankName" 
+                              placeholder="Ej: BBVA, Santander..." 
+                              // Mostramos el detectado si existe, si no el que viene del cliente o el manual
+                              value={detectedBank || (editingClient?.bankName || "")} 
+                              onChange={(e) => setDetectedBank(e.target.value)}
+                              className="bg-slate-50 border-none rounded-2xl font-bold h-12 pl-10 text-cyan-700" 
+                            />
+                            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                          </div>
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">IBAN (24 caracteres)</Label>
-                          <Input 
-                            value={ibanValue} 
-                            onChange={(e) => setIbanValue(e.target.value.replace(/\s/g, "").toUpperCase())}
-                            required 
-                            className="bg-cyan-50 border-none rounded-2xl font-mono text-[11px] font-black text-cyan-700 h-12"
-                          />
+                          <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">IBAN Bancario</Label>
+                          <div className="relative">
+                            <Input 
+                              value={ibanValue} 
+                              onChange={(e) => handleIbanChange(e.target.value)}
+                              required 
+                              className={cn(
+                                "bg-cyan-50 border-2 rounded-2xl font-mono text-[11px] font-black h-12 transition-all",
+                                validationErrors.iban ? "border-red-200 bg-red-50 text-red-600" : "border-transparent text-cyan-700"
+                              )}
+                            />
+                            {ibanValue.replace(/\s/g, '').length >= 15 && (
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                {validationErrors.iban ? <XCircle className="text-red-500 h-5 w-5" /> : <CheckCircle2 className="text-emerald-500 h-5 w-5" />}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="space-y-2">
                           <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Observaciones</Label>
@@ -372,7 +468,7 @@ export default function ClientsPage() {
                   <Button 
                     type="submit" 
                     className="w-full h-16 bg-slate-900 hover:bg-cyan-600 text-white font-black rounded-3xl uppercase text-xs tracking-[0.2em] transition-all disabled:opacity-50" 
-                    disabled={isSubmitting || (ibanValue.length > 0 && ibanValue.length !== 24)}
+                    disabled={isSubmitting || validationErrors.dni || validationErrors.iban}
                   >
                     {isSubmitting ? <Loader2 className="animate-spin mr-3 h-5 w-5" /> : "Finalizar y Guardar Registro"}
                   </Button>
@@ -383,7 +479,6 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      {}
       <div className="max-w-[1600px] mx-auto px-4">
         <DataTable 
           columns={columns(handleEdit, httpClients)} 
