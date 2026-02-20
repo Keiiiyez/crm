@@ -34,6 +34,7 @@ const navLinks = [
   { href: "/products", icon: Package, label: "Servicios" },
   { href: "/audit", icon: AlertCircle, label: "Auditoría" },
   { href: "/users", icon: FileText, label: "Usuarios" },
+  { href: "/comisiones", icon: TrendingUp, label: "Comisiones" },
   {
     href: "/inform",
     icon: UserCog,

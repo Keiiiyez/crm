@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
-    const emailInterno = `${nombre.toLowerCase().replace(/\s+/g, '.')}@crm.local`;
+    const emailInterno = `${nombre.toLowerCase().replace(/\s+/g, '.')}@ivhaes.com`;
     
     const [result]: any = await connection.execute(
       `INSERT INTO usuarios (nombre, password, email, rol, estado) VALUES (?, ?, ?, 'ASESOR', 'ACTIVO')`,

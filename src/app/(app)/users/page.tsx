@@ -249,7 +249,7 @@ function UsersContent() {
                       <DialogTrigger asChild>
                         <Button variant="ghost" className="rounded-xl hover:bg-slate-100 text-slate-600 group">
                           <Shield className="h-4 w-4 mr-2 group-hover:text-slate-900 transition-colors" />
-                          <span className="text-[10px] font-bold uppercase tracking-widest">Ver Matriz</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Ver accesos</span>
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="rounded-[2.5rem] border-none max-w-md max-h-[85vh] overflow-y-auto shadow-2xl">
@@ -277,7 +277,7 @@ function UsersContent() {
                           </Button>
 
                           <div className="space-y-3">
-                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] border-b pb-2">Matriz de Acceso Real-Time</p>
+                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] border-b pb-2">Accesos</p>
                             <div className="grid grid-cols-1 gap-2">
                               {/* Usamos ADMIN como referencia de todos los permisos posibles */}
                               {rolePermissions["ADMIN"].map((perm) => {
