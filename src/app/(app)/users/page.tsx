@@ -142,7 +142,7 @@ function UsersContent() {
                   toast.success("Cuenta creada exitosamente"); 
                 }
               }} className="w-full bg-slate-900 h-12 rounded-xl font-bold uppercase text-xs tracking-widest">
-                Crear Cuenta Oficial
+                Crear Cuenta
               </Button>
             </DialogFooter>
           </DialogContent>
