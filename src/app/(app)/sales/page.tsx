@@ -90,7 +90,7 @@ export default function SalesHistoryPage() {
           ...sale, 
           clientFull: clientData,
           dni: clientData?.dni || sale.clienteDni, 
-          dateObj: new Date(sale.fecha || Date.now()) 
+          dateObj: new Date(sale.createdAt || Date.now()) 
         };
       });
       setSales(mergedSales);
@@ -290,7 +290,7 @@ export default function SalesHistoryPage() {
         </table>
       </div>
 
-      {/* MODAL EXPEDIENTE COMPLETO */}
+      {}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-3xl p-0 rounded-[2rem] overflow-hidden border-none shadow-2xl animate-in zoom-in-95 duration-300">
           <div className="bg-slate-900 p-8 text-white relative">
@@ -299,7 +299,7 @@ export default function SalesHistoryPage() {
             </div>
             <div className="flex justify-between items-start relative z-10">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-400">Expediente de Venta Oficial</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-400">Expediente de Venta</p>
                 <DialogTitle className="text-3xl font-bold tracking-tight uppercase">
                   REF-{selectedSale?.id?.toString().padStart(6, '0')}
                 </DialogTitle>

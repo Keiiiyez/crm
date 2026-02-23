@@ -70,14 +70,14 @@ export default function PromotionsPage() {
             <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
              PROMOS <span className="text-slate-300 font-light">VIGENTES</span> 
             </h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-0.5">Gestión de ofertas temporales y BTS</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-0.5">Gestión de ofertas temporales</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1400px] mx-auto">
         
-        {/* BUILDER DE PROMOS (IZQUIERDA) */}
+        {}
         <Card className="lg:col-span-4 rounded-[2.5rem] border-none shadow-2xl bg-white h-fit overflow-hidden">
           <CardHeader className="p-8 bg-slate-900 text-white">
             <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
@@ -89,7 +89,7 @@ export default function PromotionsPage() {
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nombre de la Campaña</label>
                 <Input 
-                  placeholder="EJ: BACK TO SCHOOL 2024" 
+                  placeholder="EJ: OFERTA VERANO 2026" 
                   value={form.nombre}
                   onChange={e => setForm({...form, nombre: e.target.value.toUpperCase()})}
                   className="bg-slate-50 border-none h-12 rounded-xl font-bold text-xs uppercase"

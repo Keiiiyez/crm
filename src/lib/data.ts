@@ -17,4 +17,4 @@ export const salesByMonth = [
 
 ]
 
-export const OPERATOR_OPTIONS = ["Movistar", "Orange", "Vodafone", "MásMóvil", "Yoigo", "O2", "Pepephone"];
+export const OPERATOR_OPTIONS = ["Movistar", "Orange", "Vodafone", "MásMóvil", "Yoigo", "O2", "Pepephone", "Simyo", "Lowi", "Digi", "Llamaya", "Lebara", "Tuenti", "Euskaltel", "R", "Virgin Telco", "Finetwork"];
