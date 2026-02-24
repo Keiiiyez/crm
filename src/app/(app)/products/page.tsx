@@ -4,7 +4,7 @@ import * as React from "react"
 import { 
   Plus, Trash2, Loader2, Wifi, Smartphone, 
   Briefcase, X, ListPlus, Tv, Check, FilterX, Layers,
-  PlayCircle, Search, ChevronRight, Lock, Unlock, Edit3
+  PlayCircle, Search, ChevronRight, Lock, Unlock, Edit3, Clock
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -22,10 +22,12 @@ import { useAuth } from "@/lib/auth-context"
 import { hasPermission } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
 
-const GB_OPTIONS = ["25GB", "50GB", "100GB", "150GB", "ILIMITADOS"]
+const GB_OPTIONS = ["25GB", "30GB" , "50GB", "75GB", "80GB", "100GB", "150GB", "ILIMITADOS"]
 const STREAMING_OPTIONS = [
   { id: 'netflix', name: 'Netflix', color: 'bg-red-600' },
-  { id: 'disney', name: 'Disney+', color: 'bg-blue-800' },
+  { id: 'disney', name: 'Disney+ anuncios', color: 'bg-blue-800' },
+  { id: 'disney1', name: 'Disney+ estandar', color: 'bg-blue-800' },
+  { id: 'disney2', name: 'Disney+ premium', color: 'bg-blue-800' },
   { id: 'prime', name: 'Prime Video', color: 'bg-sky-500' },
   { id: 'hbo', name: 'HBO Max', color: 'bg-indigo-600' },
   { id: 'dazn', name: 'DAZN', color: 'bg-zinc-900' },
@@ -33,9 +35,7 @@ const STREAMING_OPTIONS = [
 
 const OPERATOR_THEMES: Record<string, { bg: string, text: string, border: string, shadow: string }> = {
   VODAFONE: { bg: "bg-[#E60000]", text: "text-white", border: "border-[#E60000]", shadow: "shadow-red-500/20" },
-  ORANGE: { bg: "bg-[#FF7900]", text: "text-white", border: "border-[#FF7900]", shadow: "shadow-orange-500/20" },
   YOIGO: { bg: "bg-[#D119AE]", text: "text-white", border: "border-[#D119AE]", shadow: "shadow-purple-500/20" },
-  DIGI: { bg: "bg-[#005ABF]", text: "text-white", border: "border-[#005ABF]", shadow: "shadow-blue-700/20" },
   MASMOVIL: { bg: "bg-[#FFD900]", text: "text-black", border: "border-[#FFD900]", shadow: "shadow-yellow-500/20" },
 }
 
@@ -48,13 +48,14 @@ export default function ProductsPage() {
   const [filterOperator, setFilterOperator] = React.useState<string | null>(null)
   const [searchTerm, setSearchTerm] = React.useState("")
   
-  // Nuevo estado para controlar si el nombre es automático o manual
   const [isAutoName, setIsAutoName] = React.useState(true)
   
   const [form, setForm] = React.useState({
     category: "COMBO", 
     name: "",
-    price: "",
+    price: "",         // Precio Promo
+    price_full: "",    // Precio Oficial
+    promo_note: "",    // Ejemplo: *3 meses
     operator: "VODAFONE",
     type: "PORTABILIDAD",
     fiber: "600", 
@@ -70,9 +71,8 @@ export default function ProductsPage() {
     setFilterOperator(form.operator)
   }, [form.operator])
 
-  // Lógica de generación de nombre (ahora condicional)
   React.useEffect(() => {
-    if (!isAutoName) return // Si está en manual, no hacemos nada aquí
+    if (!isAutoName) return 
 
     let parts = []
     switch(form.category) {
@@ -116,17 +116,34 @@ export default function ProductsPage() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
-    const cleanData = { ...form, price: parseFloat(form.price) }
+    
+    // LIMPIEZA DE DATOS SEGÚN CATEGORÍA
+    const payload: any = { 
+      ...form, 
+      price: parseFloat(form.price),
+      price_full: form.price_full ? parseFloat(form.price_full) : null,
+      promo_note: form.promo_note || null
+    }
+
+    if (form.category === "SOLO_MOVIL" || form.category === "SOLO_TV") {
+      payload.fiber = null 
+      payload.landline = false
+    }
+    if (form.category === "FIBRA_SOLA" || form.category === "SOLO_TV") {
+      payload.mobile_main_gb = null
+      payload.extra_lines = []
+    }
+
     try {
       const res = await httpClient('/api2/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cleanData),
+        body: JSON.stringify(payload),
       })
       if (res.ok) {
         toast.success("Producto guardado")
-        setForm({ ...form, price: "", extra_lines: [], streaming_services: [], tv_package: "SIN TV" })
-        setIsAutoName(true) // Resetear a auto tras guardar
+        setForm({ ...form, price: "", price_full: "", promo_note: "", extra_lines: [], streaming_services: [], tv_package: "SIN TV" })
+        setIsAutoName(true)
         httpClientProducts()
       }
     } catch (error) { toast.error("Error") } finally { setIsSaving(false) }
@@ -147,7 +164,6 @@ export default function ProductsPage() {
   return (
     <div className="p-4 lg:p-8 bg-slate-50/50 min-h-screen space-y-6 text-left">
       
-      {/* HEADER COMPACTO CON BUSCADOR */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 max-w-[1600px] mx-auto">
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
@@ -179,7 +195,6 @@ export default function ProductsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1600px] mx-auto">
         
-        {/* BUILDER (COL 4) */}
         {canCreateProduct && (
           <Card className="lg:col-span-4 rounded-[2.5rem] border-none shadow-xl bg-white h-fit sticky top-6 overflow-hidden">
             <CardHeader className="p-6 pb-4 bg-slate-900 text-white">
@@ -191,7 +206,6 @@ export default function ProductsPage() {
             <CardContent className="p-6 space-y-5">
               <form onSubmit={handleAddProduct} className="space-y-5">
                 
-                {/* 1. OPERADORA */}
                 <div className="grid grid-cols-3 gap-2">
                   {Object.keys(OPERATOR_THEMES).map(op => (
                     <button key={op} type="button" onClick={() => setForm({...form, operator: op})}
@@ -200,45 +214,25 @@ export default function ProductsPage() {
                   ))}
                 </div>
 
-                {/* 2. CATEGORIA */}
                 <ToggleGroup type="single" value={form.category} onValueChange={(v) => v && setForm({...form, category: v})} className="grid grid-cols-4 gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100">
                   {["COMBO", "FIBRA_SOLA", "SOLO_MOVIL", "SOLO_TV"].map(cat => (
                     <ToggleGroupItem key={cat} value={cat} className="h-8 rounded-lg font-black text-[7px] data-[state=active]:bg-slate-900 data-[state=active]:text-white uppercase">{cat.replace('_', ' ')}</ToggleGroupItem>
                   ))}
                 </ToggleGroup>
 
-                {}
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center px-1">
                     <Label className="text-[9px] font-black uppercase text-slate-400 italic">Nombre de la oferta</Label>
-                    <button 
-                      type="button" 
-                      onClick={() => setIsAutoName(!isAutoName)}
-                      className={cn(
-                        "flex items-center gap-1 text-[8px] font-bold px-2 py-0.5 rounded-full transition-all",
-                        isAutoName ? "bg-emerald-50 text-emerald-600" : "bg-orange-100 text-orange-700"
-                      )}
-                    >
-                      {isAutoName ? <Lock className="h-2.5 w-2.5" /> : <Unlock className="h-2.5 w-2.5" />}
-                      {isAutoName ? "AUTO" : "MANUAL"}
+                    <button type="button" onClick={() => setIsAutoName(!isAutoName)} className={cn("flex items-center gap-1 text-[8px] font-bold px-2 py-0.5 rounded-full transition-all", isAutoName ? "bg-emerald-50 text-emerald-600" : "bg-orange-100 text-orange-700")}>
+                      {isAutoName ? <Lock className="h-2.5 w-2.5" /> : <Unlock className="h-2.5 w-2.5" />} {isAutoName ? "AUTO" : "MANUAL"}
                     </button>
                   </div>
                   <div className="relative group">
-                    <Input 
-                      value={form.name} 
-                      onChange={(e) => setForm({...form, name: e.target.value.toUpperCase()})}
-                      readOnly={isAutoName}
-                      placeholder="ESCRIBE UN NOMBRE..."
-                      className={cn(
-                        "bg-slate-50 border-none rounded-xl font-black h-11 text-[10px] shadow-inner uppercase transition-all pr-10",
-                        !isAutoName ? "ring-2 ring-orange-200 text-slate-900 bg-white" : "text-slate-600"
-                      )} 
-                    />
+                    <Input value={form.name} onChange={(e) => setForm({...form, name: e.target.value.toUpperCase()})} readOnly={isAutoName} placeholder="ESCRIBE UN NOMBRE..." className={cn("bg-slate-50 border-none rounded-xl font-black h-11 text-[10px] shadow-inner uppercase pr-10", !isAutoName ? "ring-2 ring-orange-200 text-slate-900 bg-white" : "text-slate-600")} />
                     {!isAutoName && <Edit3 className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-orange-500 opacity-50" />}
                   </div>
                 </div>
 
-                {/* 4. DINAMICO */}
                 <div className="space-y-3">
                   {(form.category.includes("FIBRA") || form.category === "COMBO") && (
                     <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 space-y-3">
@@ -248,11 +242,7 @@ export default function ProductsPage() {
                       </div>
                       <div className="flex gap-1.5">
                         {["300", "600", "1"].map(v => (
-                          <button key={v} type="button" onClick={() => setForm({...form, fiber: v})}
-                            className={cn("flex-1 py-2 rounded-lg text-[9px] font-black border-2 transition-all", 
-                              form.fiber === v ? "bg-white border-blue-600 text-blue-600 shadow-sm" : "bg-transparent border-transparent text-slate-400")}>
-                            {v === "1" ? "1GB" : `${v}M`}
-                          </button>
+                          <button key={v} type="button" onClick={() => setForm({...form, fiber: v})} className={cn("flex-1 py-2 rounded-lg text-[9px] font-black border-2 transition-all", form.fiber === v ? "bg-white border-blue-600 text-blue-600 shadow-sm" : "bg-transparent border-transparent text-slate-400")}>{v === "1" ? "1GB" : `${v}M`}</button>
                         ))}
                       </div>
                     </div>
@@ -262,16 +252,11 @@ export default function ProductsPage() {
                     <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 space-y-3">
                       <div className="flex justify-between items-center">
                         <Label className="text-[10px] font-black uppercase text-slate-800 flex items-center gap-2"><Smartphone className="h-3.5 w-3.5 text-purple-600" /> Móvil</Label>
-                        <Button type="button" onClick={() => setForm({...form, extra_lines: [...form.extra_lines, {gb: "25GB", speed: "5G"}]})} 
-                          className="h-6 text-[7px] bg-purple-600 text-white rounded-lg font-black px-2">+ LÍNEA</Button>
+                        <Button type="button" onClick={() => setForm({...form, extra_lines: [...form.extra_lines, {gb: "25GB", speed: "5G"}]})} className="h-6 text-[7px] bg-purple-600 text-white rounded-lg font-black px-2">+ LÍNEA</Button>
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {GB_OPTIONS.map(gb => (
-                          <button key={gb} type="button" onClick={() => setForm({...form, mobile_main_gb: gb})}
-                            className={cn("px-2 py-1.5 rounded-lg text-[8px] font-black border-2 transition-all", 
-                              form.mobile_main_gb === gb ? "bg-white border-purple-600 text-purple-600 shadow-sm" : "bg-transparent border-transparent text-slate-400")}>
-                            {gb}
-                          </button>
+                          <button key={gb} type="button" onClick={() => setForm({...form, mobile_main_gb: gb})} className={cn("px-2 py-1.5 rounded-lg text-[8px] font-black border-2 transition-all", form.mobile_main_gb === gb ? "bg-white border-purple-600 text-purple-600 shadow-sm" : "bg-transparent border-transparent text-slate-400")}>{gb}</button>
                         ))}
                       </div>
                       {form.extra_lines.map((line, idx) => (
@@ -310,22 +295,34 @@ export default function ProductsPage() {
                   )}
                 </div>
 
-                <div className="relative">
-                  <Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({...form, price: e.target.value})}
-                    className="bg-slate-900 border-none rounded-2xl font-black text-white h-16 text-3xl pl-8 shadow-xl tabular-nums" placeholder="0.00" required />
-                  <span className="absolute right-6 top-1/2 -translate-y-1/2 text-emerald-400 font-black italic">€</span>
+                {/* PRECIOS Y NOTAS */}
+                <div className="space-y-4 pt-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="relative">
+                      <Label className="text-[8px] font-black text-slate-400 uppercase ml-1">Precio Promo</Label>
+                      <Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({...form, price: e.target.value})} className="bg-slate-900 border-none rounded-2xl font-black text-white h-14 text-xl pl-6" placeholder="0.00" required />
+                      <span className="absolute right-4 top-[65%] -translate-y-1/2 text-emerald-400 font-black text-xs">€</span>
+                    </div>
+                    <div className="relative">
+                      <Label className="text-[8px] font-black text-slate-400 uppercase ml-1">Precio Final</Label>
+                      <Input type="number" step="0.01" value={form.price_full} onChange={(e) => setForm({...form, price_full: e.target.value})} className="bg-slate-100 border-none rounded-2xl font-black text-slate-600 h-14 text-xl pl-6" placeholder="0.00" />
+                      <span className="absolute right-4 top-[65%] -translate-y-1/2 text-slate-400 font-black text-xs">€</span>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <Input value={form.promo_note} onChange={(e) => setForm({...form, promo_note: e.target.value})} placeholder="VIGENCIA (EJ: *3 MESES)" className="h-10 pl-9 bg-slate-50 border-dashed border-slate-200 text-[9px] font-bold uppercase rounded-xl" />
+                  </div>
                 </div>
 
                 <Button type="submit" disabled={isSaving} className="w-full h-12 bg-emerald-500 hover:bg-slate-800 text-white font-black rounded-xl uppercase text-[10px] tracking-widest transition-all shadow-lg active:scale-95">
-                  {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5 mr-2" />}
-                  Publicar Tarifa
+                  {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5 mr-2" />} Publicar Tarifa
                 </Button>
               </form>
             </CardContent>
           </Card>
         )}
 
-        {/* LISTADO (COL 8) */}
         <Card className={`${canCreateProduct ? "lg:col-span-8" : "lg:col-span-12"} rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden`}>
           <CardContent className="p-0">
             <Table>
@@ -341,7 +338,7 @@ export default function ProductsPage() {
                   <TableRow key={p.id} className="border-b border-slate-50 group hover:bg-slate-50/40 transition-all duration-300">
                     <TableCell className="py-6 pl-8">
                       <div className="flex flex-col gap-2">
-                        <span className="font-black text-slate-900 text-[11px] uppercase tracking-tighter group-hover:text-blue-600 transition-colors">{p.name}</span>
+                        <span className="font-black text-slate-900 text-[11px] uppercase tracking-tighter">{p.name}</span>
                         <Badge className={cn("text-[8px] font-black border-none px-3 py-1 rounded-lg uppercase tracking-widest w-fit",
                             OPERATOR_THEMES[p.operator]?.bg || "bg-slate-900",
                             OPERATOR_THEMES[p.operator]?.text || "text-white"
@@ -350,7 +347,7 @@ export default function ProductsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1.5">
-                         {p.fiber && <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[8px] font-black border border-blue-100"><Wifi className="h-2.5 w-2.5" /> {p.fiber === "1" ? "1GB" : `${p.fiber}M`}</div>}
+                         {p.fiber && p.category !== 'SOLO_MOVIL' && <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[8px] font-black border border-blue-100"><Wifi className="h-2.5 w-2.5" /> {p.fiber === "1" ? "1GB" : `${p.fiber}M`}</div>}
                          {p.mobile_main_gb && <div className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[8px] font-black border border-purple-100"><Smartphone className="h-2.5 w-2.5" /> {p.mobile_main_gb}</div>}
                          {Array.isArray(p.streaming_services) && p.streaming_services.map((ottId: string) => (
                             <div key={ottId} className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded text-[7px] font-black text-white uppercase", STREAMING_OPTIONS.find(o => o.id === ottId)?.color || "bg-slate-900")}>
@@ -360,10 +357,16 @@ export default function ProductsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right pr-8">
-                      <div className="flex flex-col items-end gap-2">
-                        <span className="text-xl font-black text-slate-900 tracking-tighter tabular-nums">{Number(p.price).toFixed(2)}€</span>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-xl font-black text-slate-900 tracking-tighter tabular-nums">{Number(p.price).toFixed(2)}€</span>
+                          {p.price_full && (
+                            <><span className="text-slate-300 font-light text-xs">/</span><span className="text-sm font-bold text-slate-400 tabular-nums">{Number(p.price_full).toFixed(2)}€</span></>
+                          )}
+                        </div>
+                        {p.promo_note && <span className="text-[8px] font-black text-emerald-500 uppercase italic tracking-wider">{p.promo_note}</span>}
                         {canCreateProduct && (
-                          <button onClick={() => handleDelete(p.id)} className="text-slate-200 hover:text-rose-500 transition-colors"><Trash2 className="h-4 w-4"/></button>
+                          <button onClick={() => handleDelete(p.id)} className="text-slate-200 hover:text-rose-500 transition-colors mt-1"><Trash2 className="h-3.5 w-3.5"/></button>
                         )}
                       </div>
                     </TableCell>

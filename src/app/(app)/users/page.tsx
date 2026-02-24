@@ -16,7 +16,6 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 
-// Importaciones de tu lógica de sistema
 import { httpClient } from "@/lib/http-client"
 import { useAuth } from "@/lib/auth-context"
 import { ProtectedAuditRoute } from "@/components/protected-audit-route"
@@ -38,7 +37,6 @@ function UsersContent() {
   const [isAddOpen, setIsAddOpen] = React.useState(false)
   const [newUser, setNewUser] = React.useState({ nombre: "", password: "" })
 
-  // Filtrar quiénes pueden ser coordinadores para el selector
   const coordinadoresDisponibles = React.useMemo(() => {
     return users.filter(u => u.rol === "COORDINADOR" || u.rol === "ADMIN")
   }, [users])
@@ -66,11 +64,15 @@ function UsersContent() {
     try {
       const res = await httpClient("/api/users", {
         method: "PATCH",
-        body: JSON.stringify({ userId, field, value }),
+        body: JSON.stringify({ 
+          userId, 
+          field, 
+          value,
+          editorNombre: currentUser?.nombre || "Sistema Admin" 
+        }),
       })
       if (!res.ok) throw new Error()
       
-      // Actualizamos localmente: si el campo es 'role' en JS, en el estado lo mapeamos a 'rol'
       setUsers(prev => prev.map(u => 
         u.id === userId ? { ...u, [field === 'role' ? 'rol' : field]: value } : u
       ))
@@ -105,7 +107,7 @@ function UsersContent() {
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
             <Button className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl px-6 h-12 shadow-lg transition-all hover:-translate-y-1">
-              <UserPlus className="h-4 w-4 mr-2" /> Agregar Colaborador
+              <UserPlus className="h-4 w-4 mr-2" /> Agregar usuario
             </Button>
           </DialogTrigger>
           <DialogContent className="rounded-[2rem] border-none shadow-2xl">
@@ -114,7 +116,7 @@ function UsersContent() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Nombre de Acceso</label>
+                <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Nombre y Apellido</label>
                 <Input 
                   placeholder="Ej: jsmith" 
                   value={newUser.nombre} 
@@ -123,7 +125,7 @@ function UsersContent() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Contraseña Temporal</label>
+                <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Contraseña</label>
                 <Input 
                   type="password" 
                   placeholder="••••••••" 
@@ -135,7 +137,13 @@ function UsersContent() {
             </div>
             <DialogFooter>
               <Button onClick={async () => {
-                const res = await httpClient("/api/users", { method: "POST", body: JSON.stringify(newUser) });
+                const res = await httpClient("/api/users", { 
+                  method: "POST", 
+                  body: JSON.stringify({
+                    ...newUser,
+                    editorNombre: currentUser?.nombre || "Sistema Admin"
+                  }) 
+                });
                 if(res.ok) { 
                   setIsAddOpen(false); 
                   loadData(); 
@@ -279,7 +287,6 @@ function UsersContent() {
                           <div className="space-y-3">
                             <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] border-b pb-2">Accesos</p>
                             <div className="grid grid-cols-1 gap-2">
-                              {/* Usamos ADMIN como referencia de todos los permisos posibles */}
                               {rolePermissions["ADMIN"].map((perm) => {
                                 const hasIt = rolePermissions[user.rol as UserRole]?.includes(perm);
                                 return (

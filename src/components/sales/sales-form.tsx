@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { httpClient } from "@/lib/http-client"
 
-const OPERATOR_OPTIONS = ["Movistar", "Vodafone", "Orange", "Yoigo", "Digi", "MásMóvil"]
+const OPERATOR_OPTIONS = ["Vodafone", "Yoigo", "MásMóvil"]
 
 const formSchema = z.object({
   clienteId: z.string().min(1, "Selecciona un cliente."),
@@ -212,7 +212,7 @@ export function SalesForm() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* CATÁLOGO IZQUIERDO - DISEÑO MANTENIDO SIN BRILLOS */}
+          {}
           <Card className="lg:col-span-4 border-none rounded-[2.5rem] shadow-xl bg-[#0f172a] text-white overflow-hidden h-fit sticky top-8">
             <div className="p-8 pb-4 space-y-6">
               <h3 className="text-sky-400 font-black text-xs uppercase tracking-widest flex items-center gap-2"><Box size={16} /> Catálogo de Operadora</h3>

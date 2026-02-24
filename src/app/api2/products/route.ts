@@ -12,7 +12,6 @@ const dbConfig = {
 export async function GET(req: NextRequest) {
   try {
     const connection = await mysql.createConnection(dbConfig);
-    // Permitir filtrar por operadora usando ?operator=VODAFONE
     const operator = req.nextUrl.searchParams.get('operator');
     let rows: any = [];
     if (operator) {
@@ -35,6 +34,8 @@ export const POST = requirePermission("create_product", async (req: NextRequest)
     const { 
       name, 
       price, 
+      price_full,       
+      promo_note,       
       category, 
       operator, 
       type, 
@@ -42,24 +43,26 @@ export const POST = requirePermission("create_product", async (req: NextRequest)
       landline, 
       mobile_main_gb, 
       mobile_main_speed,
-      extra_lines,        // Array de líneas adicionales
-      tv_package,         // Nombre del pack de TV
-      streaming_services  // Array de servicios (Netflix, HBO, etc.)
+      extra_lines,        
+      tv_package,         
+      streaming_services  
     } = body;
 
     const connection = await mysql.createConnection(dbConfig);
     
-    // Consulta extendida con los nuevos campos de TV y Streaming
+    // Consulta actualizada con price_full y promo_note
     const query = `
       INSERT INTO products 
-      (name, price, category, operator, type, fiber, landline, 
+      (name, price, price_full, promo_note, category, operator, type, fiber, landline, 
        mobile_main_gb, mobile_main_speed, extra_lines, tv_package, streaming_services) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     await connection.execute(query, [
       name, 
       price, 
+      price_full || null,      // <--- NUEVO
+      promo_note || null,      // <--- NUEVO
       category, 
       operator, 
       type, 
@@ -67,9 +70,9 @@ export const POST = requirePermission("create_product", async (req: NextRequest)
       landline ? 1 : 0, 
       mobile_main_gb || null, 
       mobile_main_speed || null,
-      JSON.stringify(extra_lines || []),       // Guardar array como JSON string
+      JSON.stringify(extra_lines || []),       
       tv_package || "SIN TV",
-      JSON.stringify(streaming_services || []) // Guardar array como JSON string
+      JSON.stringify(streaming_services || []) 
     ]);
 
     await connection.end();
