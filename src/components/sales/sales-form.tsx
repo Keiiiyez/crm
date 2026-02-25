@@ -142,7 +142,7 @@ export function SalesForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6">
         
-        {/* BUSCADOR DE CLIENTE - ORIGINAL */}
+        {/* BUSCADOR DE CLIENTE */}
         <div className="relative max-w-4xl mx-auto pt-4 pb-4 animate-in fade-in slide-in-from-top-4 duration-700">
           <Popover open={openSearch} onOpenChange={setOpenSearch}>
             <PopoverTrigger asChild>
@@ -212,7 +212,7 @@ export function SalesForm() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {}
+          {/* CATALOGO IZQUIERDA */}
           <Card className="lg:col-span-4 border-none rounded-[2.5rem] shadow-xl bg-[#0f172a] text-white overflow-hidden h-fit sticky top-8">
             <div className="p-8 pb-4 space-y-6">
               <h3 className="text-sky-400 font-black text-xs uppercase tracking-widest flex items-center gap-2"><Box size={16} /> Catálogo de Operadora</h3>
@@ -229,10 +229,36 @@ export function SalesForm() {
                     <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-amber-400"><Gift size={14}/> Combos Convergentes</span>
                     <div className="grid grid-cols-1 gap-3">
                       {catalog.combos.map(p => (
-                        <button key={p.id} type="button" onClick={() => append({ nombre: p.name, precioBase: Number(p.price) })} className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 hover:border-amber-500 transition-all text-left">
-                          <div className="flex justify-between items-start mb-1"><span className="text-[9px] font-black text-amber-500 uppercase">Ahorro Pack</span><span className="font-black text-sm text-white">{p.price}€</span></div>
-                          <p className="text-xs font-bold text-slate-100 leading-tight">{p.name.split('+')[0]}</p>
+                        <button 
+                          key={p.id} 
+                          type="button" 
+                          onClick={() => append({ 
+                            nombre: p.name, 
+                            precioBase: Number(p.price),
+                            detalles: p.promo_note ? `OFERTA: ${p.promo_note} (Oficial: ${p.price_full}€)` : ""
+                          })} 
+                          className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 hover:border-amber-500 transition-all text-left group relative overflow-hidden"
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="text-[9px] font-black text-amber-500 uppercase tracking-tighter">
+                              {p.promo_note ? `PROMO: ${p.promo_note}` : "Ahorro Pack"}
+                            </span>
+                            <div className="text-right">
+                              {p.price_full && (
+                                <span className="block text-[10px] text-slate-400 line-through leading-none decoration-red-500/40">
+                                  {p.price_full}€
+                                </span>
+                              )}
+                              <span className="font-black text-sm text-white">{p.price}€</span>
+                            </div>
+                          </div>
+                          <p className="text-xs font-bold text-slate-100 leading-tight pr-8">{p.name.split('+')[0]}</p>
                           {renderDesgloseTags(p.name)}
+                          {p.promo_note && (
+                            <div className="absolute top-0 right-0">
+                              <div className="bg-amber-500 text-[8px] font-black px-2 py-0.5 rounded-bl-lg animate-pulse text-slate-900">OFERTA</div>
+                            </div>
+                          )}
                         </button>
                       ))}
                     </div>
@@ -244,9 +270,22 @@ export function SalesForm() {
                     <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-sky-400"><Wifi size={14}/> Fibra y Móvil</span>
                     <div className="grid grid-cols-2 gap-2">
                       {catalog.connectivity.map(p => (
-                        <button key={p.id} type="button" onClick={() => append({ nombre: p.name, precioBase: Number(p.price) })} className="p-3 rounded-xl bg-white/5 border border-white/10 hover:border-sky-500 transition-all text-left group">
+                        <button 
+                          key={p.id} 
+                          type="button" 
+                          onClick={() => append({ 
+                            nombre: p.name, 
+                            precioBase: Number(p.price),
+                            detalles: p.promo_note ? `OFERTA: ${p.promo_note} (Oficial: ${p.price_full}€)` : ""
+                          })} 
+                          className="p-3 rounded-xl bg-white/5 border border-white/10 hover:border-sky-500 transition-all text-left group"
+                        >
                           <p className="text-[10px] font-bold truncate text-slate-300 group-hover:text-white">{p.name}</p>
-                          <p className="text-[11px] font-black text-sky-400">{p.price}€</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-[11px] font-black text-sky-400">{p.price}€</p>
+                            {p.price_full && <span className="text-[9px] text-slate-500 line-through decoration-red-500/30">{p.price_full}€</span>}
+                          </div>
+                          {p.promo_note && <p className="text-[8px] text-amber-400 font-bold mt-1 uppercase italic">{p.promo_note}</p>}
                         </button>
                       ))}
                     </div>
@@ -270,23 +309,35 @@ export function SalesForm() {
             {!operadorDestino && <div className="p-10 text-center text-white/20 text-xs italic">Selecciona operador para ver productos</div>}
           </Card>
 
-          {/* DERECHA - RESUMEN */}
+          {/* DERECHA - RESUMEN DEL EXPEDIENTE */}
           <div className="lg:col-span-8 space-y-6">
             <Card className="border border-slate-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden">
-              <div className="p-8 border-b border-slate-50 flex justify-between items-center"><h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm"><Receipt className="h-5 w-5 text-sky-500" /> Resumen del Expediente</h3><Button type="button" variant="outline" onClick={() => append({ nombre: "", precioBase: 0 })} className="rounded-full px-6 border-sky-100 text-sky-600 hover:bg-sky-50 font-bold text-xs">+ LÍNEA MANUAL</Button></div>
+              <div className="p-8 border-b border-slate-50 flex justify-between items-center"><h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm"><Receipt className="h-5 w-5 text-sky-500" /> Resumen del Expediente</h3><Button type="button" variant="outline" onClick={() => append({ nombre: "", precioBase: 0, detalles: "" })} className="rounded-full px-6 border-sky-100 text-sky-600 hover:bg-sky-50 font-bold text-xs">+ LÍNEA MANUAL</Button></div>
               <CardContent className="p-8 space-y-4">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="p-6 bg-slate-50/50 rounded-[2rem] border border-slate-100 flex items-center gap-4 animate-in slide-in-from-right-4">
-                    <div className="flex-1 grid grid-cols-12 gap-4">
-                      <div className="md:col-span-8 space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase ml-1">Producto</label><Input {...form.register(`servicios.${index}.nombre`)} className="bg-white border-none shadow-sm rounded-xl h-11 font-bold" /></div>
-                      <div className="md:col-span-4 space-y-1"><label className="text-[9px] font-black text-slate-400 uppercase text-right mr-1">Precio (€)</label><Input type="number" step="0.01" {...form.register(`servicios.${index}.precioBase`)} className="bg-white border-none shadow-sm rounded-xl h-11 text-right font-black text-sky-600" /></div>
+                  <div key={field.id} className="p-6 bg-slate-50/50 rounded-[2rem] border border-slate-100 flex flex-col gap-2 animate-in slide-in-from-right-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 grid grid-cols-12 gap-4">
+                        <div className="md:col-span-8 space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Producto</label>
+                          <Input {...form.register(`servicios.${index}.nombre`)} className="bg-white border-none shadow-sm rounded-xl h-11 font-bold" />
+                        </div>
+                        <div className="md:col-span-4 space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase text-right mr-1">Precio (€)</label>
+                          <Input type="number" step="0.01" {...form.register(`servicios.${index}.precioBase`)} className="bg-white border-none shadow-sm rounded-xl h-11 text-right font-black text-sky-600" />
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => remove(index)} className="text-slate-300 hover:text-red-500 rounded-full h-11 w-11 shrink-0"><Trash2 size={20} /></Button>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => remove(index)} className="text-slate-300 hover:text-red-500 rounded-full h-11 w-11"><Trash2 size={20} /></Button>
+                    {/* Visualización de la Promo en el Resumen */}
+                    {form.watch(`servicios.${index}.detalles`) && (
+                      <p className="text-[10px] text-amber-600 font-bold italic ml-1"> {form.watch(`servicios.${index}.detalles`)}</p>
+                    )}
                   </div>
                 ))}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-100">
-                  <div className="space-y-2"><FormLabel className="text-xs font-bold text-slate-400 uppercase">Observaciones</FormLabel><Textarea {...form.register("observaciones")} className="border-slate-100 rounded-2xl min-h-[120px] bg-slate-50/50" /></div>
+                  <div className="space-y-2"><FormLabel className="text-xs font-bold text-slate-400 uppercase">Observaciones de la Venta</FormLabel><Textarea {...form.register("observaciones")} className="border-slate-100 rounded-2xl min-h-[120px] bg-slate-50/50 placeholder:text-slate-300" placeholder="Añade notas adicionales aquí..." /></div>
                   <div className="flex flex-col gap-4">
                     <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-xl">
                       <div className="space-y-3">

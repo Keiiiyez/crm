@@ -5,7 +5,7 @@ import {
   Search, Printer, History, Calendar as CalendarIcon, 
   User, ShieldCheck, X, FileText, MapPin, Phone, Mail, CreditCard,
   CheckCircle2, XCircle, Clock, ChevronLeft, ChevronRight, Euro, Hash,
-  Zap, Tv, Smartphone
+  Zap, Tv, Smartphone, Wifi, Tag, Trash2, MessageSquare, ClipboardList, Gift
 } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -17,6 +17,8 @@ import { toast } from "sonner"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { 
   Select, 
   SelectContent, 
@@ -43,11 +45,14 @@ export default function SalesHistoryPage() {
   const [isUpdating, setIsUpdating] = React.useState(false)
   const [isGeneratingPDF, setIsGeneratingPDF] = React.useState(false)
 
+  // NUEVOS ESTADOS PARA GESTIÓN
+  const [tempNotes, setTempNotes] = React.useState("")
+  const [tempChecklist, setTempChecklist] = React.useState<any>({})
+  const [currentUser] = React.useState({ role: 'admin' }); // Ajustar según tu auth
+
   const downloadExpedientePDF = async (sale: any) => {
     setIsGeneratingPDF(true);
     try {
-      // Usar lo que ya tenemos del merge en loadData
-      // No necesitamos llamar a la API si ya tiene clientFull
       await generateExpedientePDF(sale, null);
       toast.success('PDF descargado');
     } catch (e) {
@@ -65,27 +70,12 @@ export default function SalesHistoryPage() {
         httpClient('/api/clients').then(r => r.json())
       ]);
       
-      console.log('=== SALES DATA ===');
-      console.log('Sales from API:', resS);
-      if (resS && resS.length > 0) {
-        console.log('First sale object keys:', Object.keys(resS[0]));
-        console.log('First sale full object:', resS[0]);
-      }
-      
-      console.log('=== CLIENTS DATA ===');
-      console.log('Clients from API:', resC);
-      if (resC && resC.length > 0) {
-        console.log('First client object:', resC[0]);
-      }
-      
       const salesArray = Array.isArray(resS) ? resS : [];
       const clientsArray = Array.isArray(resC) ? resC : [];
       
       const mergedSales = salesArray.map((sale: any) => {
-        console.log(`Sale ${sale.id} - looking for cliente match with ID:`, sale.cliente_id, 'or clienteId:', sale.clienteId);
         const matchingId = sale.cliente_id || sale.clienteId;
         const clientData = clientsArray.find((c: any) => c.id.toString() === matchingId?.toString());
-        console.log(`Result for sale ${sale.id}:`, clientData);
         return { 
           ...sale, 
           clientFull: clientData,
@@ -95,12 +85,34 @@ export default function SalesHistoryPage() {
       });
       setSales(mergedSales);
     } catch (e) { 
-      console.error('Error loading data:', e);
       toast.error("Error al cargar el historial") 
     }
   }, []);
 
   React.useEffect(() => { loadData() }, [loadData])
+
+  // EFECTO PARA CARGAR GESTIÓN AL ABRIR MODAL
+  React.useEffect(() => {
+    if (selectedSale) {
+      setTempNotes(selectedSale.gestion_notas || "")
+      setTempChecklist(selectedSale.gestion_checklist || {})
+    }
+  }, [selectedSale])
+
+  // FUNCIÓN PARA GUARDAR GESTIÓN (PATCH)
+  const saveGestion = async (updatedData: any) => {
+    if (!selectedSale) return;
+    try {
+      await httpClient(`/api2/sales/${selectedSale.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData)
+      });
+      loadData();
+    } catch (e) {
+      toast.error("Error al sincronizar gestión");
+    }
+  };
 
   const updateSaleStatus = async (saleId: number, newStatus: string) => {
     setIsUpdating(true);
@@ -118,7 +130,7 @@ export default function SalesHistoryPage() {
         await httpClient(`/api/clients/${sale.cliente_id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ operator: sale.operador_destino })
+          body: JSON.stringify({ operator: sale.operador_destino || sale.operadorDestino })
         });
         toast.success("Ficha del cliente actualizada");
       }
@@ -132,11 +144,26 @@ export default function SalesHistoryPage() {
     }
   };
 
+  const deleteSale = async (saleId: number) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar esta venta permanentemente?")) return;
+    try {
+      const res = await httpClient(`/api2/sales/${saleId}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success("Venta eliminada correctamente");
+        loadData();
+      } else {
+        throw new Error();
+      }
+    } catch (e) {
+      toast.error("Error al eliminar la venta");
+    }
+  };
+
   const filteredSales = React.useMemo(() => {
     return sales.filter(sale => {
-      const matchesText = 
-        sale.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sale.dni?.includes(searchTerm);
+      const name = (sale.clientName || sale.clientFull?.name || "").toLowerCase();
+      const dni = (sale.dni || "").toLowerCase();
+      const matchesText = name.includes(searchTerm.toLowerCase()) || dni.includes(searchTerm.toLowerCase());
       const matchesDate = !selectedDate ? true : 
         format(sale.dateObj, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
       return matchesText && matchesDate;
@@ -182,18 +209,9 @@ export default function SalesHistoryPage() {
               {selectedDate ? format(selectedDate, "PPP", { locale: es }) : "Filtrar por Fecha"}
             </Button>
           </PopoverTrigger>
-         <PopoverContent 
-  className="w-[310px] p-4 border-none shadow-[0_20px_50px_rgba(0,0,0,0.2)] rounded-3xl bg-white" 
-  align="end"
-  sideOffset={10}
->
-  <Calendar 
-    mode="single" 
-    selected={selectedDate} 
-    onSelect={setSelectedDate} 
-    locale={es} 
-  />
-</PopoverContent>
+          <PopoverContent className="w-[310px] p-4 border-none shadow-[0_20px_50px_rgba(0,0,0,0.2)] rounded-3xl bg-white" align="end" sideOffset={10}>
+            <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} locale={es} />
+          </PopoverContent>
         </Popover>
       </div>
 
@@ -208,7 +226,7 @@ export default function SalesHistoryPage() {
               <th className="px-8 py-6">Operadora</th>
               <th className="px-8 py-6 text-center">Estado</th>
               <th className="px-8 py-6 text-right">Importe</th>
-              <th className="px-8 py-6 text-center">Detalles</th>
+              <th className="px-8 py-6 text-center">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -218,7 +236,7 @@ export default function SalesHistoryPage() {
                     {format(sale.dateObj, 'dd/MM/yyyy')}
                 </td>
                 <td className="px-8 py-4 uppercase font-bold text-slate-700 text-[13px] tracking-tight group-hover:translate-x-1 transition-transform">
-                    {sale.clientName}
+                    {sale.clientName || sale.clientFull?.name}
                 </td>
                 <td className="px-8 py-4">
                     <span className="text-purple-600 font-bold uppercase text-[9px] tracking-widest bg-purple-50/40 px-2 py-1 rounded-md">
@@ -266,22 +284,19 @@ export default function SalesHistoryPage() {
                         <Button 
                           variant="ghost" 
                           onClick={() => { setSelectedSale(sale); setIsModalOpen(true); }} 
-                          className="h-10 w-10 p-0 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all text-slate-300 hover:text-cyan-600"
-                          title="Ver detalles"
+                          className="h-9 w-9 p-0 rounded-lg bg-white border border-slate-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all text-slate-400 hover:text-cyan-600"
                         >
                           <FileText className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          disabled={isGeneratingPDF}
-                          onClick={async () => {
-                            await downloadExpedientePDF(sale);
-                          }} 
-                          className="h-10 w-10 p-0 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all text-slate-300 hover:text-emerald-600 disabled:opacity-50"
-                          title="Descargar PDF"
-                        >
-                          <Printer className="h-4 w-4" />
-                        </Button>
+                        {currentUser.role === 'admin' && (
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => deleteSale(sale.id)} 
+                            className="h-9 w-9 p-0 rounded-lg bg-white border border-slate-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all text-slate-300 hover:text-rose-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                     </div>
                 </td>
               </tr>
@@ -290,9 +305,8 @@ export default function SalesHistoryPage() {
         </table>
       </div>
 
-      {}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-3xl p-0 rounded-[2rem] overflow-hidden border-none shadow-2xl animate-in zoom-in-95 duration-300">
+        <DialogContent className="max-w-4xl p-0 rounded-[2rem] overflow-hidden border-none shadow-2xl animate-in zoom-in-95 duration-300">
           <div className="bg-slate-900 p-8 text-white relative">
             <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                 <ShieldCheck size={120} />
@@ -321,8 +335,70 @@ export default function SalesHistoryPage() {
             </div>
           </div>
           
-          <div className="p-10 space-y-8 bg-white overflow-y-auto max-h-[80vh]">
+          <div className="p-10 space-y-8 bg-white overflow-y-auto max-h-[85vh]">
             
+            {/* --- BLOQUE NUEVO: PANEL DE GESTIÓN (3 COLUMNAS) --- */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* COL 1: CHECKLIST */}
+                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4">
+                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                        <ClipboardList size={14} className="text-cyan-600"/> Checklist Provisión
+                    </h3>
+                    <div className="space-y-2">
+                        {['fibra', 'moviles', 'portabilidad', 'firma'].map((item) => (
+                            <div key={item} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                                <Checkbox 
+                                    id={item} 
+                                    checked={!!tempChecklist[item]} 
+                                    onCheckedChange={(checked) => {
+                                      const newCheck = { ...tempChecklist, [item]: !!checked };
+                                      setTempChecklist(newCheck);
+                                      saveGestion({ gestion_checklist: newCheck });
+                                    }}
+                                />
+                                <label htmlFor={item} className="text-[10px] font-bold uppercase text-slate-600 cursor-pointer">{item}</label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* COL 2: NOTAS */}
+                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4">
+                    <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+                        <MessageSquare size={14} className="text-cyan-600"/> Seguimiento
+                    </h3>
+                    <Textarea 
+                        value={tempNotes}
+                        onChange={(e) => setTempNotes(e.target.value)}
+                        placeholder="Añadir notas internas..."
+                        className="min-h-[120px] bg-white border-none text-[11px] shadow-inner resize-none rounded-xl"
+                    />
+                    <Button 
+                      onClick={() => { saveGestion({ gestion_notas: tempNotes }); toast.success("Notas guardadas"); }}
+                      className="w-full bg-slate-900 text-[9px] font-bold uppercase h-9 rounded-lg"
+                    >
+                      Actualizar Seguimiento
+                    </Button>
+                </div>
+
+                {/* COL 3: RESUMEN FINANCIERO */}
+                <div className="bg-slate-900 p-6 rounded-3xl text-white flex flex-col justify-between shadow-xl">
+                    <div>
+                        <p className="text-[9px] font-bold uppercase opacity-40 tracking-widest mb-1">Operadora</p>
+                        <p className="text-xl font-bold text-cyan-400 uppercase tracking-tighter">{selectedSale?.operadorDestino}</p>
+                    </div>
+                    <div>
+                        <p className="text-[9px] font-bold uppercase opacity-40 tracking-widest mb-1">Total a Pagar</p>
+                        <p className="text-4xl font-black tracking-tighter">
+                            {Number(selectedSale?.precioCierre).toFixed(2)}€
+                        </p>
+                        <Badge className="bg-cyan-500/20 text-cyan-400 border-none text-[8px] uppercase mt-2">Iva Incluido</Badge>
+                    </div>
+                </div>
+            </div>
+
+            <hr className="border-slate-100" />
+
             {/* SECCIÓN 1: DATOS PERSONALES */}
             <section className="space-y-4">
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -375,113 +451,67 @@ export default function SalesHistoryPage() {
               </div>
             </section>
 
-           {/* SECCIÓN 3: DETALLE DEL CONTRATO */}
-<section className="space-y-4">
-  <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-    <Hash className="text-cyan-600" size={16}/>
-    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest">Detalle del Contrato</h3>
-  </div>
-  <div className="grid gap-4">
-    {selectedSale?.servicios?.map((s: any, i: number) => {
-      // Parsear JSONs que vienen de la tabla products
-      const parseSafe = (data: any) => {
-        if (!data) return [];
-        if (typeof data === 'string') {
-          try { return JSON.parse(data); } catch { return []; }
-        }
-        return data;
-      };
-
-      const streaming = parseSafe(s.streaming_services);
-      const extras = parseSafe(s.extra_lines);
-
-      return (
-        <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="p-4 flex justify-between items-center bg-slate-50/50">
-            <div className="flex items-center gap-3">
-              <span className="h-6 w-6 bg-slate-900 text-white rounded text-[10px] flex items-center justify-center font-bold">{i + 1}</span>
-              <span className="font-bold text-slate-700 text-[11px] uppercase">{s.nombre}</span>
-            </div>
-            <span className="font-bold text-slate-900 text-sm">{Number(s.precioBase).toFixed(2)} €</span>
-          </div>
-          
-          <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-slate-100">
-            {s.fiber && (
-              <div className="space-y-1">
-                <p className="text-[8px] font-bold text-slate-400 uppercase">Fibra</p>
-                <p className="text-xs font-bold text-slate-600">{s.fiber} MB</p>
+            {/* SECCIÓN 3: PRODUCTOS Y PROMOCIONES */}
+            <section className="space-y-6">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                <Tag className="text-cyan-600" size={16}/>
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest">Servicios y Ofertas</h3>
               </div>
-            )}
-            {s.mobile_main_gb && (
-              <div className="space-y-1">
-                <p className="text-[8px] font-bold text-slate-400 uppercase">Móvil</p>
-                <p className="text-xs font-bold text-slate-600">{s.mobile_main_gb}</p>
-              </div>
-            )}
-            {s.tv_package && (
-              <div className="space-y-1">
-                <p className="text-[8px] font-bold text-slate-400 uppercase">Televisión</p>
-                <p className="text-xs font-bold text-slate-600">{s.tv_package}</p>
-              </div>
-            )}
-            
-            {/* Servicios Streaming */}
-            {streaming.length > 0 && (
-              <div className="col-span-2 space-y-1">
-                <p className="text-[8px] font-bold text-slate-400 uppercase">Streaming Incluido</p>
-                <div className="flex gap-1">
-                  {streaming.map((st: string) => (
-                    <span key={st} className="text-[9px] font-bold text-white bg-slate-800 px-2 py-0.5 rounded uppercase">{st}</span>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <p className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">Items Contratados</p>
+                  {selectedSale?.servicios?.map((s: any, i: number) => (
+                    <div key={i} className="p-4 flex justify-between items-center bg-white rounded-2xl border border-slate-100 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="h-5 w-5 bg-slate-100 rounded flex items-center justify-center text-[10px] font-bold">{i+1}</div>
+                        <p className="font-bold text-slate-700 text-[11px] uppercase leading-none">{s.nombre}</p>
+                      </div>
+                      <span className="font-black text-slate-900 text-sm">{Number(s.precioBase).toFixed(2)}€</span>
+                    </div>
                   ))}
                 </div>
+
+                <div className="space-y-3">
+                  <p className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">Promoción Aplicada</p>
+                  {selectedSale?.promocionNombre ? (
+                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                      <div className="flex items-center gap-2 text-emerald-700 font-bold text-[11px] uppercase">
+                        <Gift size={14}/> {selectedSale.promocionNombre}
+                      </div>
+                      <p className="text-[10px] text-emerald-600/80 mt-1 italic leading-tight">{selectedSale.promocionDetalles}</p>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-slate-50 border border-slate-200 border-dashed rounded-2xl text-center">
+                      <p className="text-[10px] font-bold text-slate-300 uppercase">Sin Promoción Directa</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-      );
-    })}
-  </div>
-</section>
+
+              {selectedSale?.observaciones && (
+                <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100">
+                  <p className="text-[9px] font-bold text-amber-600 uppercase mb-1">Observaciones del Asesor</p>
+                  <p className="text-xs text-slate-600 italic">"{selectedSale.observaciones}"</p>
+                </div>
+              )}
+            </section>
 
             {/* FOOTER MODAL */}
-            <div className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-slate-900 rounded-[1.5rem] p-6 text-white flex items-center justify-between">
-                        <div>
-                            <p className="text-[9px] font-bold uppercase opacity-40 tracking-widest mb-1">Operadora Destino</p>
-                            <p className="text-xl font-bold text-cyan-400 uppercase tracking-tighter">{selectedSale?.operador_destino || selectedSale?.operadorDestino}</p>
-                        </div>
-                        <ShieldCheck className="opacity-20" size={40} />
-                    </div>
-                    <div className="bg-cyan-600 rounded-[1.5rem] p-6 text-white flex items-center justify-between shadow-xl shadow-cyan-600/20">
-                        <div>
-                            <p className="text-[9px] font-bold uppercase opacity-60 tracking-widest mb-1">Importe Cierre</p>
-                            <div className="text-3xl font-bold tracking-tighter">
-                                {Number(selectedSale?.precio_cierre || selectedSale?.precioCierre).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €
-                            </div>
-                        </div>
-                        <CreditCard className="opacity-30" size={40} />
-                    </div>
-                </div>
-
-                <div className="flex gap-4 mt-8">
-                    <Button 
-                        disabled={isGeneratingPDF}
-                        onClick={async () => {
-                          await downloadExpedientePDF(selectedSale);
-                        }} 
-                        className="flex-1 h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      <Printer className="h-4 w-4" />
-                      Descargar PDF
-                    </Button>
-                    <Button 
-                        onClick={() => setIsModalOpen(false)} 
-                        className="flex-1 h-14 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-900 font-bold rounded-2xl uppercase text-[10px] tracking-widest transition-all"
-                    >
-                      Cerrar Expediente
-                    </Button>
-                </div>
+            <div className="flex gap-4 pt-6">
+                <Button 
+                    disabled={isGeneratingPDF}
+                    onClick={() => downloadExpedientePDF(selectedSale)} 
+                    className="flex-1 h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
+                >
+                  <Printer className="h-4 w-4" /> Descargar PDF
+                </Button>
+                <Button 
+                    onClick={() => setIsModalOpen(false)} 
+                    className="flex-1 h-14 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-900 font-bold rounded-2xl uppercase text-[10px] tracking-widest transition-all"
+                >
+                  Cerrar Expediente
+                </Button>
             </div>
           </div>
         </DialogContent>

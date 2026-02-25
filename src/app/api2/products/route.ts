@@ -61,8 +61,8 @@ export const POST = requirePermission("create_product", async (req: NextRequest)
     await connection.execute(query, [
       name, 
       price, 
-      price_full || null,      // <--- NUEVO
-      promo_note || null,      // <--- NUEVO
+      price_full || null,      
+      promo_note || null,      
       category, 
       operator, 
       type, 
