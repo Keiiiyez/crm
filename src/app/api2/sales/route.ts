@@ -11,14 +11,13 @@ const dbConfig = {
 
 /**
  * GET: Obtiene el historial de ventas completo
- * Incluye datos del cliente, servicios desglosados y campos de gestión/promoción.
  */
 export const GET = requirePermission("view_sales", async (request: NextRequest, user) => {
   let connection;
   try {
     connection = await mysql.createConnection(dbConfig);
 
-    // 1. Obtenemos las ventas con todos los campos necesarios
+    // 1. Obtenemos las ventas
     const [rows]: any = await connection.execute(`
       SELECT 
         s.id, 
@@ -47,7 +46,7 @@ export const GET = requirePermission("view_sales", async (request: NextRequest, 
       ORDER BY s.fecha DESC
     `);
 
-    // 2. Obtenemos los ítems de las ventas cruzando con productos para specs técnicas
+    // 2. Obtenemos los ítems con specs técnicas
     const [items]: any = await connection.execute(`
       SELECT 
         si.sale_id,
@@ -63,10 +62,9 @@ export const GET = requirePermission("view_sales", async (request: NextRequest, 
       LEFT JOIN products p ON si.nombre_servicio = p.name
     `);
 
-    // 3. Formateamos la respuesta para el Frontend
+    // 3. Formateamos respuesta
     const salesWithItems = rows.map((sale: any) => ({
       ...sale,
-      // Parseo del checklist (JSON o String)
       gestion_checklist: sale.gestion_checklist 
         ? (typeof sale.gestion_checklist === 'string' ? JSON.parse(sale.gestion_checklist) : sale.gestion_checklist) 
         : {},
@@ -103,8 +101,7 @@ export const GET = requirePermission("view_sales", async (request: NextRequest, 
 });
 
 /**
- * POST: Registra una nueva venta
- * Crea contrato, registro de venta, ítems y entrada en auditoría.
+ * POST: Registra una nueva venta con BUSQUEDA AUTOMÁTICA de promo
  */
 export const POST = requirePermission("create_sale", async (request: NextRequest, user) => {
   let connection;
@@ -117,37 +114,43 @@ export const POST = requirePermission("create_sale", async (request: NextRequest
       precioCierre, 
       observaciones, 
       usuario_id, 
-      usuario_nombre,
-      promocionNombre,    // <-- De promo_note del producto
-      promocionDetalles   // <-- Info extra (ej. precio anterior)
+      usuario_nombre 
     } = body;
 
-    if (!clienteId || !operadorDestino || !servicios || servicios.length === 0) {
-      return NextResponse.json({ error: "Datos requeridos faltantes" }, { status: 400 });
-    }
-
     connection = await mysql.createConnection(dbConfig);
-    await connection.beginTransaction(); // Usamos transacción para asegurar integridad
+    await connection.beginTransaction();
 
-    // 1. Generar número de contrato único
-    const numeroContrato = `CTR-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    
+    const nombreABuscar = servicios[0]?.nombre?.trim();
+    
+    const [productCatalog]: any = await connection.execute(
+      'SELECT promo_note, price_full FROM products WHERE TRIM(name) = ? OR name LIKE ? LIMIT 1',
+      [nombreABuscar, `%${nombreABuscar}%`]
+    );
+    
+    const autoPromoNombre = productCatalog[0]?.promo_note || null;
+    const autoPromoDetalles = productCatalog[0]?.price_full 
+      ? `Precio oficial: ${productCatalog[0].price_full}€` 
+      : null;
 
-    // 2. Crear registro en tabla contratos
+    // --- 1. Crear número de contrato ---
+    const numeroContrato = `CTR-${Date.now()}`;
+
+    // --- 2. Crear registro en tabla contratos ---
     const [contractResult]: any = await connection.execute(
       `INSERT INTO contratos (
-        cliente_id, numero_contrato, operadora_destino, tipo_contrato,
+        cliente_id, numero_contrato, operadora_destino, 
         servicios, precio_total, fecha_inicio, estado, asesor_id, asesor_nombre
-      ) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?)`,
       [
-        clienteId, numeroContrato, operadorDestino, "NUEVA_LINEA",
+        clienteId, numeroContrato, operadorDestino,
         JSON.stringify(servicios), precioCierre || 0, "PENDIENTE_TRAMITACION",
         usuario_id, usuario_nombre
       ]
     );
-
     const contratoId = contractResult.insertId;
 
-    // 3. Crear registro en tabla sales (con campos de promoción)
+    // --- 3. Crear la VENTA con la promoción ---
     const [saleResult]: any = await connection.execute(
       `INSERT INTO sales (
         cliente_id, operador_destino, precio_cierre, status, 
@@ -157,13 +160,12 @@ export const POST = requirePermission("create_sale", async (request: NextRequest
       [
         clienteId, operadorDestino, precioCierre || 0, "PENDIENTE", 
         observaciones || "", usuario_id, usuario_nombre, contratoId,
-        promocionNombre || null, promocionDetalles || null
+        autoPromoNombre, autoPromoDetalles
       ]
     );
-
     const saleId = saleResult.insertId;
 
-    // 4. Crear registros en tabla sale_items
+    // --- 4. Crear los items de la venta ---
     for (const servicio of servicios) {
       await connection.execute(
         `INSERT INTO sale_items (sale_id, nombre_servicio, precio_base)
@@ -172,7 +174,7 @@ export const POST = requirePermission("create_sale", async (request: NextRequest
       );
     }
 
-    // 5. Registrar en auditoría
+    // --- 5. Auditoría ---
     await connection.execute(
       `INSERT INTO auditoria_cambios (
         tabla_modificada, registro_id, tipo_cambio, valor_nuevo,
@@ -186,8 +188,7 @@ export const POST = requirePermission("create_sale", async (request: NextRequest
     return NextResponse.json({
       id: saleId,
       numeroContrato,
-      status: "PENDIENTE",
-      createdAt: new Date().toISOString()
+      status: "PENDIENTE"
     }, { status: 201 });
 
   } catch (error: any) {

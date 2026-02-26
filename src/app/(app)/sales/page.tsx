@@ -342,10 +342,10 @@ export default function SalesHistoryPage() {
                 {/* COL 1: CHECKLIST */}
                 <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-4">
                     <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
-                        <ClipboardList size={14} className="text-cyan-600"/> Checklist Provisión
+                        <ClipboardList size={14} className="text-cyan-600"/> Checklist de activación
                     </h3>
                     <div className="space-y-2">
-                        {['fibra', 'moviles', 'portabilidad', 'firma'].map((item) => (
+                        {['fibra', 'moviles', 'portabilidad'].map((item) => (
                             <div key={item} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
                                 <Checkbox 
                                     id={item} 

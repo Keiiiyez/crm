@@ -8,7 +8,7 @@ import * as z from "zod"
 import { 
   Search, ChevronsUpDown, Plus, Trash2, Phone, MapPin, CreditCard, Mail, 
   User, Globe, CheckCircle2, Receipt, Building2, Landmark, 
-  UserCircle, Calculator, Fingerprint, Box, Wifi, Smartphone, Tv, Gift, Edit3
+  UserCircle, Calculator, Fingerprint, Box, Wifi, Smartphone, Tv, Gift, Edit3, X, Filter
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { httpClient } from "@/lib/http-client"
+import { cn } from "@/lib/utils"
 
 const OPERATOR_OPTIONS = ["Vodafone", "Yoigo", "MásMóvil"]
 
@@ -37,6 +38,9 @@ const formSchema = z.object({
   observaciones: z.string().optional(),
 })
 
+/**
+ * Componente visual para mostrar detalles de la ficha del cliente
+ */
 function InfoItem({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
   return (
     <div className="space-y-1.5 p-3 rounded-2xl border border-sky-50 bg-sky-50/30">
@@ -49,6 +53,9 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode, label: string
   )
 }
 
+/**
+ * Renderiza badges automáticos según el contenido del nombre del producto
+ */
 const renderDesgloseTags = (name: string) => {
   const parts = name.split('+').map(p => p.trim());
   return (
@@ -58,7 +65,7 @@ const renderDesgloseTags = (name: string) => {
         const p = part.toLowerCase();
         if (p.includes('mb') || p.includes('fibra')) icon = <Wifi size={10} />;
         if (p.includes('gb') || p.includes('ilim') || p.includes('movil')) icon = <Smartphone size={10} />;
-        if (p.includes('tv') || p.includes('video') || p.includes('serié')) icon = <Tv size={10} />;
+        if (p.includes('tv') || p.includes('video') || p.includes('serié') || p.includes('disney') || p.includes('netflix') || p.includes('hbo')) icon = <Tv size={10} />;
         return (
           <Badge key={i} variant="secondary" className="bg-white/10 text-[9px] text-white border-none py-0.5 px-2 flex items-center gap-1 font-medium whitespace-nowrap">
             {icon} {part}
@@ -75,6 +82,9 @@ export function SalesForm() {
   const [clients, setClients] = React.useState<any[]>([])
   const [availableProducts, setAvailableProducts] = React.useState<any[]>([])
   const [selectedClient, setSelectedClient] = React.useState<any | null>(null)
+  
+  // Estado para la búsqueda interactiva en el catálogo
+  const [catalogSearch, setCatalogSearch] = React.useState("")
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -83,6 +93,7 @@ export function SalesForm() {
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "servicios" })
 
+  // Carga inicial de clientes
   React.useEffect(() => {
     async function loadClients() {
       try {
@@ -96,6 +107,7 @@ export function SalesForm() {
 
   const operadorDestino = form.watch("operadorDestino");
 
+  // Carga de catálogo según la operadora seleccionada
   React.useEffect(() => {
     async function loadProducts() {
       if (!operadorDestino) { setAvailableProducts([]); return; }
@@ -108,14 +120,25 @@ export function SalesForm() {
     loadProducts();
   }, [operadorDestino]);
 
+  /**
+   * CLASIFICACIÓN DEL CATÁLOGO 
+   * Filtrado basado en el campo 'category' que viene de la BD
+   */
   const catalog = React.useMemo(() => {
-    return {
-      combos: availableProducts.filter(p => p.name.includes('+')),
-      connectivity: availableProducts.filter(p => (p.name.toLowerCase().includes('mb') || p.name.toLowerCase().includes('gb') || p.name.toLowerCase().includes('ilim')) && !p.name.includes('+')),
-      extras: availableProducts.filter(p => (p.name.toLowerCase().includes('tv') || p.name.toLowerCase().includes('netflix') || p.name.toLowerCase().includes('prime') || p.name.toLowerCase().includes('video')) && !p.name.includes('+'))
-    };
-  }, [availableProducts]);
+    const filtered = availableProducts.filter(p => 
+      p.name.toLowerCase().includes(catalogSearch.toLowerCase())
+    );
 
+    return {
+      combos: filtered.filter(p => p.category === 'COMBO'),
+      connectivity: filtered.filter(p => p.category === 'SOLO_MOVIL' || p.category === 'SOLO_FIBRA'),
+      extras: filtered.filter(p => p.category === 'SOLO_TV' || p.category === 'ADICIONAL')
+    };
+  }, [availableProducts, catalogSearch]);
+
+  /**
+   * LÓGICA FISCAL (IVA/IGIC/IPSI)
+   */
   const watchServicios = form.watch("servicios");
   const fiscal = React.useMemo(() => {
     const subtotal = watchServicios.reduce((acc, curr) => acc + (Number(curr.precioBase) || 0), 0);
@@ -126,6 +149,7 @@ export function SalesForm() {
     return { subtotal, tax: subtotal * rate, total: subtotal + (subtotal * rate), name, pct: rate * 100 };
   }, [watchServicios, selectedClient]);
 
+  // Sincronizar precio de cierre total
   React.useEffect(() => { form.setValue("precioCierre", fiscal.total); }, [fiscal.total, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -134,21 +158,28 @@ export function SalesForm() {
         method: 'POST',
         body: JSON.stringify({ ...values, usuario_id: user?.id, usuario_nombre: user?.nombre }),
       });
-      if (res.ok) { toast.success("Venta registrada"); form.reset(); setSelectedClient(null); }
-    } catch (e) { toast.error("Error al registrar"); }
+      if (res.ok) { 
+        toast.success("Venta registrada con éxito"); 
+        form.reset(); 
+        setSelectedClient(null); 
+      }
+    } catch (e) { toast.error("Error al registrar la venta"); }
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6">
         
-        {/* BUSCADOR DE CLIENTE */}
+        {/* BUSCADOR DE CLIENTE (Popover con Command) */}
         <div className="relative max-w-4xl mx-auto pt-4 pb-4 animate-in fade-in slide-in-from-top-4 duration-700">
           <Popover open={openSearch} onOpenChange={setOpenSearch}>
             <PopoverTrigger asChild>
               <Button 
                 variant="outline" 
-                className={`w-full justify-between h-20 px-8 rounded-[2rem] border-none shadow-[0_15px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition-all duration-500 ${selectedClient ? "bg-white ring-1 ring-slate-200" : "bg-white hover:bg-slate-50"}`}
+                className={cn(
+                  "w-full justify-between h-20 px-8 rounded-[2rem] border-none shadow-[0_15px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition-all duration-500",
+                  selectedClient ? "bg-white ring-1 ring-slate-200" : "bg-white hover:bg-slate-50"
+                )}
               >
                 <div className="flex items-center gap-5 text-left">
                   {selectedClient ? (
@@ -193,10 +224,13 @@ export function SalesForm() {
           </Popover>
         </div>
 
-        {/* DATOS CLIENTE */}
+        {/* DATOS CLIENTE (Ficha detallada) */}
         {selectedClient && (
           <Card className="border border-sky-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-sky-50/50 px-8 py-4 border-b border-sky-100 flex justify-between items-center text-sm font-bold text-sky-800 uppercase"><span className="flex items-center gap-2"><UserCircle className="h-5 w-5" /> Ficha del Titular</span><Button variant="ghost" size="sm" className="text-sky-400 hover:text-red-500 rounded-full h-8 text-[10px] font-bold" onClick={() => { setSelectedClient(null); form.setValue("clienteId", ""); }}>CAMBIAR CLIENTE</Button></div>
+            <div className="bg-sky-50/50 px-8 py-4 border-b border-sky-100 flex justify-between items-center text-sm font-bold text-sky-800 uppercase">
+              <span className="flex items-center gap-2"><UserCircle className="h-5 w-5" /> Ficha del Titular</span>
+              <Button variant="ghost" size="sm" className="text-sky-400 hover:text-red-500 rounded-full h-8 text-[10px] font-bold" onClick={() => { setSelectedClient(null); form.setValue("clienteId", ""); }}>CAMBIAR CLIENTE</Button>
+            </div>
             <CardContent className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <InfoItem icon={<User />} label="Nombre" value={selectedClient.name} />
                 <InfoItem icon={<CreditCard />} label="DNI" value={selectedClient.dni} />
@@ -212,107 +246,154 @@ export function SalesForm() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* CATALOGO IZQUIERDA */}
-          <Card className="lg:col-span-4 border-none rounded-[2.5rem] shadow-xl bg-[#0f172a] text-white overflow-hidden h-fit sticky top-8">
-            <div className="p-8 pb-4 space-y-6">
+          {/* CATALOGO IZQUIERDA (Estilo Oscuro) */}
+          <Card className="lg:col-span-4 border-none rounded-[2.5rem] shadow-xl bg-[#0f172a] text-white overflow-hidden h-[85vh] sticky top-8 flex flex-col">
+            <div className="p-8 pb-4 space-y-4">
               <h3 className="text-sky-400 font-black text-xs uppercase tracking-widest flex items-center gap-2"><Box size={16} /> Catálogo de Operadora</h3>
-              <FormField control={form.control} name="operadorDestino" render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl><SelectTrigger className="bg-white/5 border-white/10 text-white rounded-xl h-12"><SelectValue placeholder="Elegir Operadora..." /></SelectTrigger></FormControl>
-                  <SelectContent>{OPERATOR_OPTIONS.map(op => <SelectItem key={op} value={op}>{op}</SelectItem>)}</SelectContent>
-                </Select>
-              )} />
+              
+              <div className="space-y-3">
+                <FormField control={form.control} name="operadorDestino" render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl><SelectTrigger className="bg-white/5 border-white/10 text-white rounded-xl h-12"><SelectValue placeholder="Elegir Operadora..." /></SelectTrigger></FormControl>
+                    <SelectContent>{OPERATOR_OPTIONS.map(op => <SelectItem key={op} value={op}>{op}</SelectItem>)}</SelectContent>
+                  </Select>
+                )} />
 
-              <div className="space-y-8 pt-4 border-t border-white/5">
-                {catalog.combos.length > 0 && (
-                  <div className="space-y-3">
-                    <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-amber-400"><Gift size={14}/> Combos Convergentes</span>
-                    <div className="grid grid-cols-1 gap-3">
-                      {catalog.combos.map(p => (
-                        <button 
-                          key={p.id} 
-                          type="button" 
-                          onClick={() => append({ 
-                            nombre: p.name, 
-                            precioBase: Number(p.price),
-                            detalles: p.promo_note ? `OFERTA: ${p.promo_note} (Oficial: ${p.price_full}€)` : ""
-                          })} 
-                          className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 hover:border-amber-500 transition-all text-left group relative overflow-hidden"
-                        >
-                          <div className="flex justify-between items-start mb-1">
-                            <span className="text-[9px] font-black text-amber-500 uppercase tracking-tighter">
-                              {p.promo_note ? `PROMO: ${p.promo_note}` : "Ahorro Pack"}
-                            </span>
-                            <div className="text-right">
-                              {p.price_full && (
-                                <span className="block text-[10px] text-slate-400 line-through leading-none decoration-red-500/40">
-                                  {p.price_full}€
-                                </span>
-                              )}
-                              <span className="font-black text-sm text-white">{p.price}€</span>
-                            </div>
-                          </div>
-                          <p className="text-xs font-bold text-slate-100 leading-tight pr-8">{p.name.split('+')[0]}</p>
-                          {renderDesgloseTags(p.name)}
-                          {p.promo_note && (
-                            <div className="absolute top-0 right-0">
-                              <div className="bg-amber-500 text-[8px] font-black px-2 py-0.5 rounded-bl-lg animate-pulse text-slate-900">OFERTA</div>
-                            </div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {catalog.connectivity.length > 0 && (
-                  <div className="space-y-3">
-                    <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-sky-400"><Wifi size={14}/> Fibra y Móvil</span>
-                    <div className="grid grid-cols-2 gap-2">
-                      {catalog.connectivity.map(p => (
-                        <button 
-                          key={p.id} 
-                          type="button" 
-                          onClick={() => append({ 
-                            nombre: p.name, 
-                            precioBase: Number(p.price),
-                            detalles: p.promo_note ? `OFERTA: ${p.promo_note} (Oficial: ${p.price_full}€)` : ""
-                          })} 
-                          className="p-3 rounded-xl bg-white/5 border border-white/10 hover:border-sky-500 transition-all text-left group"
-                        >
-                          <p className="text-[10px] font-bold truncate text-slate-300 group-hover:text-white">{p.name}</p>
-                          <div className="flex items-center gap-2">
-                            <p className="text-[11px] font-black text-sky-400">{p.price}€</p>
-                            {p.price_full && <span className="text-[9px] text-slate-500 line-through decoration-red-500/30">{p.price_full}€</span>}
-                          </div>
-                          {p.promo_note && <p className="text-[8px] text-amber-400 font-bold mt-1 uppercase italic">{p.promo_note}</p>}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {catalog.extras.length > 0 && (
-                  <div className="space-y-3">
-                    <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-purple-400"><Tv size={14}/> TV y Streaming</span>
-                    <div className="grid grid-cols-1 gap-2">
-                      {catalog.extras.map(p => (
-                        <button key={p.id} type="button" onClick={() => append({ nombre: p.name, precioBase: Number(p.price) })} className="p-3 flex justify-between items-center rounded-xl bg-white/5 border border-white/10 hover:border-purple-500 transition-all text-[11px] font-bold group">
-                          <span className="text-slate-300 group-hover:text-white">{p.name}</span><span className="text-purple-400">{p.price}€</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* BUSCADOR DEL CATÁLOGO */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                  <Input 
+                    placeholder="Buscar en el catálogo..." 
+                    value={catalogSearch}
+                    onChange={(e) => setCatalogSearch(e.target.value)}
+                    className="bg-white/5 border-white/10 text-white pl-10 h-10 rounded-xl text-xs"
+                  />
+                  {catalogSearch && (
+                    <button onClick={() => setCatalogSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-            {!operadorDestino && <div className="p-10 text-center text-white/20 text-xs italic">Selecciona operador para ver productos</div>}
+
+            <div className="flex-1 overflow-y-auto px-8 pb-8 space-y-8 scrollbar-thin scrollbar-thumb-white/10">
+              {operadorDestino ? (
+                <>
+                  {/* CATEGORÍA: COMBOS */}
+                  {catalog.combos.length > 0 && (
+                    <div className="space-y-3">
+                      <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-amber-400 sticky top-0 bg-[#0f172a] py-2 z-10"><Gift size={14}/> Combos Convergentes</span>
+                      <div className="grid grid-cols-1 gap-3">
+                        {catalog.combos.map(p => (
+                          <button 
+                            key={p.id} type="button" 
+                            onClick={() => append({ 
+                              nombre: p.name, 
+                              precioBase: Number(p.price),
+                              detalles: p.promo_note ? `OFERTA: ${p.promo_note} (Oficial: ${p.price_full}€)` : ""
+                            })} 
+                            className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 hover:border-amber-500 transition-all text-left group relative overflow-hidden"
+                          >
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="text-[9px] font-black text-amber-500 uppercase tracking-tighter">
+                                {p.promo_note ? `PROMO: ${p.promo_note}` : "Pack Ahorro"}
+                              </span>
+                              <div className="text-right">
+                                {p.price_full && (
+                                  <span className="block text-[10px] text-slate-400 line-through leading-none decoration-red-500/40">{p.price_full}€</span>
+                                )}
+                                <span className="font-black text-sm text-white">{p.price}€</span>
+                              </div>
+                            </div>
+                            <p className="text-xs font-bold text-slate-100 leading-tight pr-8 uppercase">{p.name}</p>
+                            {renderDesgloseTags(p.name)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CATEGORÍA: CONECTIVIDAD (FIBRA Y MÓVIL) */}
+                  {catalog.connectivity.length > 0 && (
+                    <div className="space-y-3">
+                      <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-sky-400 sticky top-0 bg-[#0f172a] py-2 z-10"><Wifi size={14}/> Fibra y Móvil</span>
+                      <div className="grid grid-cols-1 gap-2">
+                        {catalog.connectivity.map(p => (
+                          <button 
+                            key={p.id} type="button" 
+                            onClick={() => append({ 
+                              nombre: p.name, 
+                              precioBase: Number(p.price),
+                              detalles: p.promo_note ? `OFERTA: ${p.promo_note}` : ""
+                            })} 
+                            className="p-3 flex justify-between items-center rounded-xl bg-white/5 border border-white/10 hover:border-sky-500 transition-all text-left group"
+                          >
+                            <div className="space-y-0.5">
+                              <p className="text-[10px] font-bold text-slate-300 group-hover:text-white uppercase">{p.name}</p>
+                              {p.promo_note && <p className="text-[8px] text-amber-400 font-black uppercase italic">{p.promo_note}</p>}
+                            </div>
+                            <div className="text-right">
+                               <p className="text-[11px] font-black text-sky-400">{p.price}€</p>
+                               {p.price_full && <p className="text-[8px] text-slate-500 line-through">{p.price_full}€</p>}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CATEGORÍA: EXTRAS (TV Y STREAMING) */}
+                  {catalog.extras.length > 0 && (
+                    <div className="space-y-3">
+                      <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-purple-400 sticky top-0 bg-[#0f172a] py-2 z-10"><Tv size={14}/> TV y Streaming</span>
+                      <div className="grid grid-cols-1 gap-2">
+                        {catalog.extras.map(p => (
+                          <button 
+                            key={p.id} type="button" 
+                            onClick={() => append({ nombre: p.name, precioBase: Number(p.price) })} 
+                            className="p-3 flex justify-between items-center rounded-xl bg-white/5 border border-white/10 hover:border-purple-500 transition-all text-[11px] font-bold group"
+                          >
+                            <div className="flex items-center gap-2">
+                                <div className="h-6 w-6 rounded-md bg-purple-500/20 flex items-center justify-center text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                                    <Tv size={12} />
+                                </div>
+                                <span className="text-slate-300 group-hover:text-white uppercase">{p.name}</span>
+                            </div>
+                            <span className="text-purple-400 font-black">{p.price}€</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ESTADO VACÍO BÚSQUEDA */}
+                  {catalog.combos.length === 0 && catalog.connectivity.length === 0 && catalog.extras.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-20 text-white/20">
+                      <Filter size={40} className="mb-4" />
+                      <p className="text-xs font-bold uppercase">Sin resultados para "{catalogSearch}"</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* ESTADO SIN OPERADORA */
+                <div className="flex flex-col items-center justify-center py-40 text-white/20">
+                  <Box size={40} className="mb-4" />
+                  <p className="text-xs font-bold uppercase">Selecciona una operadora</p>
+                </div>
+              )}
+            </div>
           </Card>
 
           {/* DERECHA - RESUMEN DEL EXPEDIENTE */}
           <div className="lg:col-span-8 space-y-6">
             <Card className="border border-slate-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden">
-              <div className="p-8 border-b border-slate-50 flex justify-between items-center"><h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm"><Receipt className="h-5 w-5 text-sky-500" /> Resumen del Expediente</h3><Button type="button" variant="outline" onClick={() => append({ nombre: "", precioBase: 0, detalles: "" })} className="rounded-full px-6 border-sky-100 text-sky-600 hover:bg-sky-50 font-bold text-xs">+ LÍNEA MANUAL</Button></div>
+              <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                <h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm"><Receipt className="h-5 w-5 text-sky-500" /> Resumen del Expediente</h3>
+                <Button type="button" variant="outline" onClick={() => append({ nombre: "", precioBase: 0, detalles: "" })} className="rounded-full px-6 border-sky-100 text-sky-600 hover:bg-sky-50 font-bold text-xs">
+                  + LÍNEA MANUAL
+                </Button>
+              </div>
               <CardContent className="p-8 space-y-4">
                 {fields.map((field, index) => (
                   <div key={field.id} className="p-6 bg-slate-50/50 rounded-[2rem] border border-slate-100 flex flex-col gap-2 animate-in slide-in-from-right-4">
@@ -320,33 +401,54 @@ export function SalesForm() {
                       <div className="flex-1 grid grid-cols-12 gap-4">
                         <div className="md:col-span-8 space-y-1">
                           <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Producto</label>
-                          <Input {...form.register(`servicios.${index}.nombre`)} className="bg-white border-none shadow-sm rounded-xl h-11 font-bold" />
+                          <Input {...form.register(`servicios.${index}.nombre`)} className="bg-white border-none shadow-sm rounded-xl h-11 font-bold uppercase" />
                         </div>
                         <div className="md:col-span-4 space-y-1">
                           <label className="text-[9px] font-black text-slate-400 uppercase text-right mr-1">Precio (€)</label>
                           <Input type="number" step="0.01" {...form.register(`servicios.${index}.precioBase`)} className="bg-white border-none shadow-sm rounded-xl h-11 text-right font-black text-sky-600" />
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => remove(index)} className="text-slate-300 hover:text-red-500 rounded-full h-11 w-11 shrink-0"><Trash2 size={20} /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => remove(index)} className="text-slate-300 hover:text-red-500 rounded-full h-11 w-11 shrink-0">
+                        <Trash2 size={20} />
+                      </Button>
                     </div>
-                    {/* Visualización de la Promo en el Resumen */}
+                    {/* Visualización de la Promo o Detalles en el Resumen */}
                     {form.watch(`servicios.${index}.detalles`) && (
-                      <p className="text-[10px] text-amber-600 font-bold italic ml-1"> {form.watch(`servicios.${index}.detalles`)}</p>
+                      <p className="text-[10px] text-amber-600 font-bold italic ml-1 flex items-center gap-1"> 
+                        <Gift size={10} /> {form.watch(`servicios.${index}.detalles`)}
+                      </p>
                     )}
                   </div>
                 ))}
 
+                {fields.length === 0 && (
+                   <div className="py-20 text-center border-2 border-dashed border-slate-100 rounded-[2rem]">
+                      <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Añade servicios desde el catálogo para comenzar</p>
+                   </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-100">
-                  <div className="space-y-2"><FormLabel className="text-xs font-bold text-slate-400 uppercase">Observaciones de la Venta</FormLabel><Textarea {...form.register("observaciones")} className="border-slate-100 rounded-2xl min-h-[120px] bg-slate-50/50 placeholder:text-slate-300" placeholder="Añade notas adicionales aquí..." /></div>
+                  <div className="space-y-2">
+                    <FormLabel className="text-xs font-bold text-slate-400 uppercase">Observaciones de la Venta</FormLabel>
+                    <Textarea {...form.register("observaciones")} className="border-slate-100 rounded-2xl min-h-[120px] bg-slate-50/50 placeholder:text-slate-300" placeholder="Añade notas adicionales aquí..." />
+                  </div>
                   <div className="flex flex-col gap-4">
                     <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-xl">
                       <div className="space-y-3">
                         <div className="flex justify-between text-slate-400 text-[10px] font-black uppercase"><span>Subtotal</span><span>{fiscal.subtotal.toFixed(2)} €</span></div>
                         <div className="flex justify-between text-sky-400 text-[10px] font-black uppercase"><span>{fiscal.name} ({fiscal.pct}%)</span><span>+ {fiscal.tax.toFixed(2)} €</span></div>
-                        <div className="pt-4 border-t border-slate-800"><p className="text-[10px] font-black uppercase text-slate-500 mb-1">Total Mensual</p><div className="flex items-baseline gap-1"><span className="text-5xl font-black text-white tracking-tighter">{fiscal.total.toFixed(2)}</span><span className="text-xl font-bold text-sky-500">€</span></div></div>
+                        <div className="pt-4 border-t border-slate-800">
+                          <p className="text-[10px] font-black uppercase text-slate-500 mb-1">Total Mensual</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-5xl font-black text-white tracking-tighter">{fiscal.total.toFixed(2)}</span>
+                            <span className="text-xl font-bold text-sky-500">€</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <Button type="submit" className="w-full h-16 text-lg font-bold rounded-2xl bg-sky-600 hover:bg-sky-700 shadow-xl transition-all uppercase tracking-widest">REGISTRAR VENTA</Button>
+                    <Button type="submit" disabled={fields.length === 0} className="w-full h-16 text-lg font-bold rounded-2xl bg-sky-600 hover:bg-sky-700 shadow-xl transition-all uppercase tracking-widest disabled:opacity-50">
+                      REGISTRAR VENTA
+                    </Button>
                   </div>
                 </div>
               </CardContent>

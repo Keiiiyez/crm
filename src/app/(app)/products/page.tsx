@@ -22,7 +22,7 @@ import { useAuth } from "@/lib/auth-context"
 import { hasPermission } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
 
-const GB_OPTIONS = ["25GB", "30GB" , "50GB", "75GB", "80GB", "100GB", "150GB", "ILIMITADOS"]
+const GB_OPTIONS = ["25GB", "30GB" , "50GB", "60GB" , "75GB", "80GB", "100GB", "150GB", "ILIMITADOS", "Compartidos"]
 const STREAMING_OPTIONS = [
   { id: 'netflix', name: 'Netflix', color: 'bg-red-600' },
   { id: 'disney', name: 'Disney+ anuncios', color: 'bg-blue-800' },
@@ -53,9 +53,9 @@ export default function ProductsPage() {
   const [form, setForm] = React.useState({
     category: "COMBO", 
     name: "",
-    price: "",         // Precio Promo
-    price_full: "",    // Precio Oficial
-    promo_note: "",    // Ejemplo: *3 meses
+    price: "",         // Precio Principal / Promo
+    price_full: "",    // Precio Oficial (Opcional)
+    promo_note: "",    // Nota de vigencia (Opcional)
     operator: "VODAFONE",
     type: "PORTABILIDAD",
     fiber: "600", 
@@ -71,6 +71,7 @@ export default function ProductsPage() {
     setFilterOperator(form.operator)
   }, [form.operator])
 
+  // Lógica de generación automática de nombre
   React.useEffect(() => {
     if (!isAutoName) return 
 
@@ -115,16 +116,27 @@ export default function ProductsPage() {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validación: Al menos un campo de precio debe tener valor
+    if (!form.price && !form.price_full) {
+      toast.error("Por favor, introduce al menos un precio.")
+      return
+    }
+
     setIsSaving(true)
     
-    // LIMPIEZA DE DATOS SEGÚN CATEGORÍA
+    // Si no hay precio promo, usamos el full como base, o viceversa
+    const priceValue = form.price ? parseFloat(form.price) : parseFloat(form.price_full)
+    const priceFullValue = (form.price && form.price_full) ? parseFloat(form.price_full) : null
+
     const payload: any = { 
       ...form, 
-      price: parseFloat(form.price),
-      price_full: form.price_full ? parseFloat(form.price_full) : null,
+      price: priceValue,
+      price_full: priceFullValue,
       promo_note: form.promo_note || null
     }
 
+    // Limpieza de datos por categoría
     if (form.category === "SOLO_MOVIL" || form.category === "SOLO_TV") {
       payload.fiber = null 
       payload.landline = false
@@ -141,12 +153,16 @@ export default function ProductsPage() {
         body: JSON.stringify(payload),
       })
       if (res.ok) {
-        toast.success("Producto guardado")
+        toast.success("Tarifa guardada correctamente")
         setForm({ ...form, price: "", price_full: "", promo_note: "", extra_lines: [], streaming_services: [], tv_package: "SIN TV" })
         setIsAutoName(true)
         httpClientProducts()
       }
-    } catch (error) { toast.error("Error") } finally { setIsSaving(false) }
+    } catch (error) { 
+      toast.error("Error al guardar") 
+    } finally { 
+      setIsSaving(false) 
+    }
   }
 
   const handleDelete = async (id: number) => {
@@ -164,6 +180,7 @@ export default function ProductsPage() {
   return (
     <div className="p-4 lg:p-8 bg-slate-50/50 min-h-screen space-y-6 text-left">
       
+      {/* HEADER & SEARCH */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 max-w-[1600px] mx-auto">
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
@@ -171,7 +188,7 @@ export default function ProductsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tighter text-slate-900 uppercase">REGISTRO <span className="text-slate-400 font-light">DE</span> SERVICIOS</h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-0.5">Ingrese las tarifas de los servicios</p>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-0.5">Gestión centralizada de tarifas</p>
           </div>
         </div>
 
@@ -195,6 +212,7 @@ export default function ProductsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1600px] mx-auto">
         
+        {/* FORMULARIO DE CREACIÓN */}
         {canCreateProduct && (
           <Card className="lg:col-span-4 rounded-[2.5rem] border-none shadow-xl bg-white h-fit sticky top-6 overflow-hidden">
             <CardHeader className="p-6 pb-4 bg-slate-900 text-white">
@@ -206,6 +224,7 @@ export default function ProductsPage() {
             <CardContent className="p-6 space-y-5">
               <form onSubmit={handleAddProduct} className="space-y-5">
                 
+                {/* Selector Operador */}
                 <div className="grid grid-cols-3 gap-2">
                   {Object.keys(OPERATOR_THEMES).map(op => (
                     <button key={op} type="button" onClick={() => setForm({...form, operator: op})}
@@ -214,12 +233,14 @@ export default function ProductsPage() {
                   ))}
                 </div>
 
+                {/* Categoría */}
                 <ToggleGroup type="single" value={form.category} onValueChange={(v) => v && setForm({...form, category: v})} className="grid grid-cols-4 gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100">
                   {["COMBO", "FIBRA_SOLA", "SOLO_MOVIL", "SOLO_TV"].map(cat => (
                     <ToggleGroupItem key={cat} value={cat} className="h-8 rounded-lg font-black text-[7px] data-[state=active]:bg-slate-900 data-[state=active]:text-white uppercase">{cat.replace('_', ' ')}</ToggleGroupItem>
                   ))}
                 </ToggleGroup>
 
+                {/* Nombre Oferta */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center px-1">
                     <Label className="text-[9px] font-black uppercase text-slate-400 italic">Nombre de la oferta</Label>
@@ -233,6 +254,7 @@ export default function ProductsPage() {
                   </div>
                 </div>
 
+                {/* Secciones Dinámicas (Fibra, Móvil, TV) */}
                 <div className="space-y-3">
                   {(form.category.includes("FIBRA") || form.category === "COMBO") && (
                     <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 space-y-3">
@@ -251,8 +273,8 @@ export default function ProductsPage() {
                   {(form.category.includes("MOVIL") || form.category === "COMBO") && (
                     <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 space-y-3">
                       <div className="flex justify-between items-center">
-                        <Label className="text-[10px] font-black uppercase text-slate-800 flex items-center gap-2"><Smartphone className="h-3.5 w-3.5 text-purple-600" /> Móvil</Label>
-                        <Button type="button" onClick={() => setForm({...form, extra_lines: [...form.extra_lines, {gb: "25GB", speed: "5G"}]})} className="h-6 text-[7px] bg-purple-600 text-white rounded-lg font-black px-2">+ LÍNEA</Button>
+                        <Label className="text-[10px] font-black uppercase text-slate-800 flex items-center gap-2"><Smartphone className="h-3.5 w-3.5 text-purple-600" /> Móvil Principal</Label>
+                        <Button type="button" onClick={() => setForm({...form, extra_lines: [...form.extra_lines, {gb: "25GB", speed: "5G"}]})} className="h-6 text-[7px] bg-purple-600 text-white rounded-lg font-black px-2">+ ADICIONAL</Button>
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {GB_OPTIONS.map(gb => (
@@ -261,7 +283,7 @@ export default function ProductsPage() {
                       </div>
                       {form.extra_lines.map((line, idx) => (
                         <div key={idx} className="flex gap-2 p-2 bg-white rounded-xl items-center border border-slate-100 shadow-sm">
-                          <Badge className="bg-purple-100 text-purple-700 text-[7px]">#{idx+1}</Badge>
+                          <Badge className="bg-purple-100 text-purple-700 text-[7px]">LINE {idx+1}</Badge>
                           <Select value={line.gb} onValueChange={(v) => {
                             const n = [...form.extra_lines]; n[idx].gb = v; setForm({...form, extra_lines: n})
                           }}>
@@ -276,7 +298,7 @@ export default function ProductsPage() {
 
                   {(form.category === "COMBO" || form.category === "SOLO_TV") && (
                     <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 space-y-3">
-                      <Label className="text-[10px] font-black uppercase text-slate-800 flex items-center gap-2"><Tv className="h-3.5 w-3.5 text-orange-600"/> TV & OTT</Label>
+                      <Label className="text-[10px] font-black uppercase text-slate-800 flex items-center gap-2"><Tv className="h-3.5 w-3.5 text-orange-600"/> TV & Streaming</Label>
                       <Select value={form.tv_package} onValueChange={(v) => setForm({...form, tv_package: v})}>
                         <SelectTrigger className="bg-white border-none h-9 text-[9px] font-black rounded-lg uppercase"><SelectValue /></SelectTrigger>
                         <SelectContent className="text-[10px] font-black uppercase">
@@ -295,23 +317,42 @@ export default function ProductsPage() {
                   )}
                 </div>
 
-                {/* PRECIOS Y NOTAS */}
+                {/* SECCIÓN DE PRECIOS ACTUALIZADA */}
                 <div className="space-y-4 pt-2">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="relative">
-                      <Label className="text-[8px] font-black text-slate-400 uppercase ml-1">Precio Promo</Label>
-                      <Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({...form, price: e.target.value})} className="bg-slate-900 border-none rounded-2xl font-black text-white h-14 text-xl pl-6" placeholder="0.00" required />
+                      <Label className="text-[8px] font-black text-emerald-600 uppercase ml-1">Precio promo</Label>
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        value={form.price} 
+                        onChange={(e) => setForm({...form, price: e.target.value})} 
+                        className="bg-slate-900 border-none rounded-2xl font-black text-white h-14 text-xl pl-6" 
+                        placeholder="0.00" 
+                      />
                       <span className="absolute right-4 top-[65%] -translate-y-1/2 text-emerald-400 font-black text-xs">€</span>
                     </div>
                     <div className="relative">
-                      <Label className="text-[8px] font-black text-slate-400 uppercase ml-1">Precio Final</Label>
-                      <Input type="number" step="0.01" value={form.price_full} onChange={(e) => setForm({...form, price_full: e.target.value})} className="bg-slate-100 border-none rounded-2xl font-black text-slate-600 h-14 text-xl pl-6" placeholder="0.00" />
+                      <Label className="text-[8px] font-black text-slate-400 uppercase ml-1">Precio base</Label>
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        value={form.price_full} 
+                        onChange={(e) => setForm({...form, price_full: e.target.value})} 
+                        className="bg-slate-100 border-none rounded-2xl font-black text-slate-600 h-14 text-xl pl-6" 
+                        placeholder="0.00" 
+                      />
                       <span className="absolute right-4 top-[65%] -translate-y-1/2 text-slate-400 font-black text-xs">€</span>
                     </div>
                   </div>
                   <div className="relative">
                     <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                    <Input value={form.promo_note} onChange={(e) => setForm({...form, promo_note: e.target.value})} placeholder="VIGENCIA (EJ: *3 MESES)" className="h-10 pl-9 bg-slate-50 border-dashed border-slate-200 text-[9px] font-bold uppercase rounded-xl" />
+                    <Input 
+                      value={form.promo_note} 
+                      onChange={(e) => setForm({...form, promo_note: e.target.value})} 
+                      placeholder="NOTA: EJ. PRECIO FIJO O PROMO 3 MESES" 
+                      className="h-10 pl-9 bg-slate-50 border-dashed border-slate-200 text-[9px] font-bold uppercase rounded-xl" 
+                    />
                   </div>
                 </div>
 
@@ -323,6 +364,7 @@ export default function ProductsPage() {
           </Card>
         )}
 
+        {/* LISTADO DE PRODUCTOS */}
         <Card className={`${canCreateProduct ? "lg:col-span-8" : "lg:col-span-12"} rounded-[2.5rem] border-none shadow-xl bg-white overflow-hidden`}>
           <CardContent className="p-0">
             <Table>
@@ -334,44 +376,50 @@ export default function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((p) => (
-                  <TableRow key={p.id} className="border-b border-slate-50 group hover:bg-slate-50/40 transition-all duration-300">
-                    <TableCell className="py-6 pl-8">
-                      <div className="flex flex-col gap-2">
-                        <span className="font-black text-slate-900 text-[11px] uppercase tracking-tighter">{p.name}</span>
-                        <Badge className={cn("text-[8px] font-black border-none px-3 py-1 rounded-lg uppercase tracking-widest w-fit",
-                            OPERATOR_THEMES[p.operator]?.bg || "bg-slate-900",
-                            OPERATOR_THEMES[p.operator]?.text || "text-white"
-                        )}>{p.operator}</Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1.5">
-                         {p.fiber && p.category !== 'SOLO_MOVIL' && <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[8px] font-black border border-blue-100"><Wifi className="h-2.5 w-2.5" /> {p.fiber === "1" ? "1GB" : `${p.fiber}M`}</div>}
-                         {p.mobile_main_gb && <div className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[8px] font-black border border-purple-100"><Smartphone className="h-2.5 w-2.5" /> {p.mobile_main_gb}</div>}
-                         {Array.isArray(p.streaming_services) && p.streaming_services.map((ottId: string) => (
-                            <div key={ottId} className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded text-[7px] font-black text-white uppercase", STREAMING_OPTIONS.find(o => o.id === ottId)?.color || "bg-slate-900")}>
-                              <PlayCircle className="h-2.5 w-2.5" /> {ottId}
-                            </div>
-                         ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right pr-8">
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="text-xl font-black text-slate-900 tracking-tighter tabular-nums">{Number(p.price).toFixed(2)}€</span>
-                          {p.price_full && (
-                            <><span className="text-slate-300 font-light text-xs">/</span><span className="text-sm font-bold text-slate-400 tabular-nums">{Number(p.price_full).toFixed(2)}€</span></>
+                {filteredProducts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="h-32 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">No se encontraron productos</TableCell>
+                  </TableRow>
+                ) : (
+                  filteredProducts.map((p) => (
+                    <TableRow key={p.id} className="border-b border-slate-50 group hover:bg-slate-50/40 transition-all duration-300">
+                      <TableCell className="py-6 pl-8">
+                        <div className="flex flex-col gap-2">
+                          <span className="font-black text-slate-900 text-[11px] uppercase tracking-tighter">{p.name}</span>
+                          <Badge className={cn("text-[8px] font-black border-none px-3 py-1 rounded-lg uppercase tracking-widest w-fit",
+                              OPERATOR_THEMES[p.operator]?.bg || "bg-slate-900",
+                              OPERATOR_THEMES[p.operator]?.text || "text-white"
+                          )}>{p.operator}</Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1.5">
+                           {p.fiber && p.category !== 'SOLO_MOVIL' && <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[8px] font-black border border-blue-100"><Wifi className="h-2.5 w-2.5" /> {p.fiber === "1" ? "1GB" : `${p.fiber}M`}</div>}
+                           {p.mobile_main_gb && <div className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[8px] font-black border border-purple-100"><Smartphone className="h-2.5 w-2.5" /> {p.mobile_main_gb}</div>}
+                           {Array.isArray(p.streaming_services) && p.streaming_services.map((ottId: string) => (
+                             <div key={ottId} className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded text-[7px] font-black text-white uppercase", STREAMING_OPTIONS.find(o => o.id === ottId)?.color || "bg-slate-900")}>
+                               <PlayCircle className="h-2.5 w-2.5" /> {ottId}
+                             </div>
+                           ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right pr-8">
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-xl font-black text-slate-900 tracking-tighter tabular-nums">{Number(p.price).toFixed(2)}€</span>
+                            {p.price_full && (
+                              <><span className="text-slate-300 font-light text-xs">/</span><span className="text-sm font-bold text-slate-400 tabular-nums line-through decoration-slate-300">{Number(p.price_full).toFixed(2)}€</span></>
+                            )}
+                          </div>
+                          {p.promo_note && <span className="text-[8px] font-black text-emerald-500 uppercase italic tracking-wider">{p.promo_note}</span>}
+                          {canCreateProduct && (
+                            <button onClick={() => handleDelete(p.id)} className="text-slate-200 hover:text-rose-500 transition-colors mt-1"><Trash2 className="h-3.5 w-3.5"/></button>
                           )}
                         </div>
-                        {p.promo_note && <span className="text-[8px] font-black text-emerald-500 uppercase italic tracking-wider">{p.promo_note}</span>}
-                        {canCreateProduct && (
-                          <button onClick={() => handleDelete(p.id)} className="text-slate-200 hover:text-rose-500 transition-colors mt-1"><Trash2 className="h-3.5 w-3.5"/></button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>

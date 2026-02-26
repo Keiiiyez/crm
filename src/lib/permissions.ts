@@ -29,7 +29,8 @@ export type Permission =
   | "view_users"
   | "delete_product"
   | "delete_users"
-  | "delete_operator_promo";
+  | "delete_operator_promo"
+  | "deleteSale";
 
 // Mapeo de permisos por rol
 export const rolePermissions: Record<UserRole, Permission[]> = {
@@ -53,7 +54,7 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "edit_client",
     "view_contracts",
     "view_operators",
-    "view_audit", // Puede ver auditoría
+    "view_audit", 
     "view_reports",
   ],
 
@@ -105,6 +106,11 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     "edit_users",
     "create_product",
     "edit_product",
+    "view_users",
+    "delete_product",
+    "delete_users",
+    "delete_operator_promo",
+    "deleteSale"
   ],
 };
 
