@@ -23,13 +23,13 @@ type AppNavProps = {
 
 const navLinks = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  {
+  { href: "/clients", icon: Users, label: "Clientes" },{
     href: "/sales",
     icon: DollarSign,
     label: "Ventas",
     subLinks: [{ href: "/sales/new", label: "Nueva Venta" }],
   },
-  { href: "/clients", icon: Users, label: "Clientes" },
+  
   //{ href: "/contracts", icon: Briefcase, label: "Contratos" },
   { href: "/products", icon: Package, label: "Servicios" },
   { href: "/audit", icon: AlertCircle, label: "Auditoría" },
