@@ -23,7 +23,8 @@ type AppNavProps = {
 
 const navLinks = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/clients", icon: Users, label: "Clientes" },{
+  { href: "/clients", icon: Users, label: "Clientes" },
+  {
     href: "/sales",
     icon: DollarSign,
     label: "Ventas",

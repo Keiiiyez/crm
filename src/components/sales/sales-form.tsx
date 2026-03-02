@@ -389,7 +389,7 @@ export function SalesForm() {
           <div className="lg:col-span-8 space-y-6">
             <Card className="border border-slate-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden">
               <div className="p-8 border-b border-slate-50 flex justify-between items-center">
-                <h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm"><Receipt className="h-5 w-5 text-sky-500" /> Resumen del Expediente</h3>
+                <h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm"><Receipt className="h-5 w-5 text-sky-500" /> Resumen del Cliente</h3>
                 <Button type="button" variant="outline" onClick={() => append({ nombre: "", precioBase: 0, detalles: "" })} className="rounded-full px-6 border-sky-100 text-sky-600 hover:bg-sky-50 font-bold text-xs">
                   + LÍNEA MANUAL
                 </Button>
@@ -423,7 +423,7 @@ export function SalesForm() {
 
                 {fields.length === 0 && (
                    <div className="py-20 text-center border-2 border-dashed border-slate-100 rounded-[2rem]">
-                      <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Añade servicios desde el catálogo para comenzar</p>
+                      <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Añade servicios</p>
                    </div>
                 )}
 
