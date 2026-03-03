@@ -38,9 +38,7 @@ const formSchema = z.object({
   observaciones: z.string().optional(),
 })
 
-/**
- * Componente visual para mostrar detalles de la ficha del cliente
- */
+
 function InfoItem({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
   return (
     <div className="space-y-1.5 p-3 rounded-2xl border border-sky-50 bg-sky-50/30">
@@ -53,9 +51,7 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode, label: string
   )
 }
 
-/**
- * Renderiza badges automáticos según el contenido del nombre del producto
- */
+
 const renderDesgloseTags = (name: string) => {
   const parts = name.split('+').map(p => p.trim());
   return (
