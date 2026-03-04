@@ -166,7 +166,7 @@ export function SalesForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6">
         
-        {/* BUSCADOR DE CLIENTE (Popover con Command) */}
+        {}
         <div className="relative max-w-4xl mx-auto pt-4 pb-4 animate-in fade-in slide-in-from-top-4 duration-700">
           <Popover open={openSearch} onOpenChange={setOpenSearch}>
             <PopoverTrigger asChild>
@@ -220,7 +220,7 @@ export function SalesForm() {
           </Popover>
         </div>
 
-        {/* DATOS CLIENTE (Ficha detallada) */}
+        {}
         {selectedClient && (
           <Card className="border border-sky-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-sky-50/50 px-8 py-4 border-b border-sky-100 flex justify-between items-center text-sm font-bold text-sky-800 uppercase">
@@ -242,7 +242,7 @@ export function SalesForm() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* CATALOGO IZQUIERDA (Estilo Oscuro) */}
+          {}
           <Card className="lg:col-span-4 border-none rounded-[2.5rem] shadow-xl bg-[#0f172a] text-white overflow-hidden h-[85vh] sticky top-8 flex flex-col">
             <div className="p-8 pb-4 space-y-4">
               <h3 className="text-sky-400 font-black text-xs uppercase tracking-widest flex items-center gap-2"><Box size={16} /> Catálogo de Operadora</h3>
@@ -255,7 +255,7 @@ export function SalesForm() {
                   </Select>
                 )} />
 
-                {/* BUSCADOR DEL CATÁLOGO */}
+                {}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                   <Input 
@@ -276,7 +276,7 @@ export function SalesForm() {
             <div className="flex-1 overflow-y-auto px-8 pb-8 space-y-8 scrollbar-thin scrollbar-thumb-white/10">
               {operadorDestino ? (
                 <>
-                  {/* CATEGORÍA: COMBOS */}
+                  {}
                   {catalog.combos.length > 0 && (
                     <div className="space-y-3">
                       <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-amber-400 sticky top-0 bg-[#0f172a] py-2 z-10"><Gift size={14}/> Combos Convergentes</span>
@@ -387,7 +387,7 @@ export function SalesForm() {
               <div className="p-8 border-b border-slate-50 flex justify-between items-center">
                 <h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm"><Receipt className="h-5 w-5 text-sky-500" /> Resumen del Cliente</h3>
                 <Button type="button" variant="outline" onClick={() => append({ nombre: "", precioBase: 0, detalles: "" })} className="rounded-full px-6 border-sky-100 text-sky-600 hover:bg-sky-50 font-bold text-xs">
-                  + LÍNEA MANUAL
+                  Añadir servicio manualmente 
                 </Button>
               </div>
               <CardContent className="p-8 space-y-4">
