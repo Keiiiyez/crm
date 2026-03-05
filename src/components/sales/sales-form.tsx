@@ -79,7 +79,7 @@ export function SalesForm() {
   const [availableProducts, setAvailableProducts] = React.useState<any[]>([])
   const [selectedClient, setSelectedClient] = React.useState<any | null>(null)
   
-  // Estado para la búsqueda interactiva en el catálogo
+  // estado para la búsqueda interactiva en el catálogo
   const [catalogSearch, setCatalogSearch] = React.useState("")
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -89,7 +89,7 @@ export function SalesForm() {
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "servicios" })
 
-  // Carga inicial de clientes
+  // carga inicial de clientes
   React.useEffect(() => {
     async function loadClients() {
       try {
@@ -103,7 +103,7 @@ export function SalesForm() {
 
   const operadorDestino = form.watch("operadorDestino");
 
-  // Carga de catálogo según la operadora seleccionada
+  // carga de servicios según la operadora seleccionada
   React.useEffect(() => {
     async function loadProducts() {
       if (!operadorDestino) { setAvailableProducts([]); return; }
@@ -117,8 +117,7 @@ export function SalesForm() {
   }, [operadorDestino]);
 
   /**
-   * CLASIFICACIÓN DEL CATÁLOGO 
-   * Filtrado basado en el campo 'category' que viene de la BD
+   * clasificación de servicios/productos según su categoría sean combos, conectividad o extras, además de aplicar el filtro de búsqueda
    */
   const catalog = React.useMemo(() => {
     const filtered = availableProducts.filter(p => 
@@ -133,7 +132,7 @@ export function SalesForm() {
   }, [availableProducts, catalogSearch]);
 
   /**
-   * LÓGICA FISCAL (IVA/IGIC/IPSI)
+   * lógica de impuestos según provincias
    */
   const watchServicios = form.watch("servicios");
   const fiscal = React.useMemo(() => {
@@ -145,7 +144,7 @@ export function SalesForm() {
     return { subtotal, tax: subtotal * rate, total: subtotal + (subtotal * rate), name, pct: rate * 100 };
   }, [watchServicios, selectedClient]);
 
-  // Sincronizar precio de cierre total
+  // precio que se actualiza al momento de cerra la venta
   React.useEffect(() => { form.setValue("precioCierre", fiscal.total); }, [fiscal.total, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -166,7 +165,7 @@ export function SalesForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6">
         
-        {}
+        {/*placeholder de búsqueda cliente*/}
         <div className="relative max-w-4xl mx-auto pt-4 pb-4 animate-in fade-in slide-in-from-top-4 duration-700">
           <Popover open={openSearch} onOpenChange={setOpenSearch}>
             <PopoverTrigger asChild>
@@ -220,7 +219,7 @@ export function SalesForm() {
           </Popover>
         </div>
 
-        {}
+        {/*datos del cliente seleccionado*/}
         {selectedClient && (
           <Card className="border border-sky-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-sky-50/50 px-8 py-4 border-b border-sky-100 flex justify-between items-center text-sm font-bold text-sky-800 uppercase">
@@ -310,7 +309,7 @@ export function SalesForm() {
                     </div>
                   )}
 
-                  {/* CATEGORÍA: CONECTIVIDAD (FIBRA Y MÓVIL) */}
+                  {/* servicios de fibra y móvil */}
                   {catalog.connectivity.length > 0 && (
                     <div className="space-y-3">
                       <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-sky-400 sticky top-0 bg-[#0f172a] py-2 z-10"><Wifi size={14}/> Fibra y Móvil</span>
@@ -339,7 +338,7 @@ export function SalesForm() {
                     </div>
                   )}
 
-                  {/* CATEGORÍA: EXTRAS (TV Y STREAMING) */}
+                  {/* servicios cm tv o móviles extras*/}
                   {catalog.extras.length > 0 && (
                     <div className="space-y-3">
                       <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-purple-400 sticky top-0 bg-[#0f172a] py-2 z-10"><Tv size={14}/> TV y Streaming</span>
@@ -363,7 +362,7 @@ export function SalesForm() {
                     </div>
                   )}
 
-                  {/* ESTADO VACÍO BÚSQUEDA */}
+                  {/* estado de búsqueda */}
                   {catalog.combos.length === 0 && catalog.connectivity.length === 0 && catalog.extras.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-20 text-white/20">
                       <Filter size={40} className="mb-4" />
@@ -372,7 +371,7 @@ export function SalesForm() {
                   )}
                 </>
               ) : (
-                /* ESTADO SIN OPERADORA */
+                
                 <div className="flex flex-col items-center justify-center py-40 text-white/20">
                   <Box size={40} className="mb-4" />
                   <p className="text-xs font-bold uppercase">Selecciona una operadora</p>
@@ -381,7 +380,7 @@ export function SalesForm() {
             </div>
           </Card>
 
-          {/* DERECHA - RESUMEN DEL EXPEDIENTE */}
+          {/*resumen de la ficha del cliente*/}
           <div className="lg:col-span-8 space-y-6">
             <Card className="border border-slate-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden">
               <div className="p-8 border-b border-slate-50 flex justify-between items-center">
@@ -408,7 +407,7 @@ export function SalesForm() {
                         <Trash2 size={20} />
                       </Button>
                     </div>
-                    {/* Visualización de la Promo o Detalles en el Resumen */}
+                    {/* visualización de la promoción y los detalles de la venta */}
                     {form.watch(`servicios.${index}.detalles`) && (
                       <p className="text-[10px] text-amber-600 font-bold italic ml-1 flex items-center gap-1"> 
                         <Gift size={10} /> {form.watch(`servicios.${index}.detalles`)}

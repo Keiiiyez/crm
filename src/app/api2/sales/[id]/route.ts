@@ -7,7 +7,7 @@ const dbConfig = {
   password: "", 
   database: "crm", 
 };
-
+// se genera una función para eliminar y mejorar la eficiencia del código, evitando crear una nueva conexión cada vez
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> } 
@@ -40,12 +40,12 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
     
-    // Extraemos los posibles campos que pueden venir del cliente
+    // se extraen los campos del cliente para actualizar
     const { status, gestion_notas, gestion_checklist } = body;
 
     connection = await mysql.createConnection(dbConfig);
 
-    // Construimos la consulta dinámicamente según lo que venga en el body
+    //se genera dinámicamente la consulta de actualización según los campos que se quieran actualizar
     const updates = [];
     const values = [];
 

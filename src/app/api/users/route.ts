@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       [nombre, password, emailInterno]
     );
 
-    // AUDITORÍA CON NOMBRE REAL
+    // auditoria = nombres reales de los usuarios
     await connection.execute(
       `INSERT INTO auditoria_cambios (tabla_modificada, registro_id, tipo_cambio, valor_nuevo, usuario_nombre, razon_cambio) 
        VALUES (?, ?, ?, ?, ?, ?)`,
@@ -35,20 +35,19 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   let connection;
   try {
-    const { userId, field, value, editorNombre } = await request.json(); // <--- RECIBE EDITOR
+    const { userId, field, value, editorNombre } = await request.json(); 
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
     const mapping: Record<string, string> = { role: 'rol', coordinadorId: 'coordinador_id', estado: 'estado', password: 'password' };
     const dbField = mapping[field] || field;
 
-    // Obtener nombre del usuario afectado para la descripción
     const [oldRows]: any = await connection.execute(`SELECT nombre FROM usuarios WHERE id = ?`, [userId]);
     const targetName = oldRows[0]?.nombre || 'Usuario';
 
     await connection.execute(`UPDATE usuarios SET ${dbField} = ? WHERE id = ?`, [value, userId]);
 
-    // AUDITORÍA CON NOMBRE REAL
+    // auditoria = nombres reales de los usuarios
     await connection.execute(
       `INSERT INTO auditoria_cambios (tabla_modificada, registro_id, tipo_cambio, valor_nuevo, usuario_nombre, razon_cambio) 
        VALUES (?, ?, ?, ?, ?, ?)`,
