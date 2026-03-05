@@ -150,7 +150,7 @@ export const POST = requirePermission("create_sale", async (request: NextRequest
     );
     const contratoId = contractResult.insertId;
 
-    // --- 3. Crear la VENTA con la promoción ---
+    // --- 3. Crear la venta con la promoción ---
     const [saleResult]: any = await connection.execute(
       `INSERT INTO sales (
         cliente_id, operador_destino, precio_cierre, status, 

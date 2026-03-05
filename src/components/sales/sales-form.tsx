@@ -8,11 +8,12 @@ import * as z from "zod"
 import { 
   Search, ChevronsUpDown, Plus, Trash2, Phone, MapPin, CreditCard, Mail, 
   User, Globe, CheckCircle2, Receipt, Building2, Landmark, 
-  UserCircle, Calculator, Fingerprint, Box, Wifi, Smartphone, Tv, Gift, Edit3, X, Filter
+  UserCircle, Calculator, Fingerprint, Box, Wifi, Smartphone, Tv, Gift, Edit3, X, Filter,
+  Layers, Tag
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -24,20 +25,22 @@ import { toast } from "sonner"
 import { httpClient } from "@/lib/http-client"
 import { cn } from "@/lib/utils"
 
-const OPERATOR_OPTIONS = ["Vodafone", "Yoigo", "MásMóvil"]
+const OPERATOR_OPTIONS = ["Vodafone", "Yoigo", "MásMóvil", "Movistar", "Orange", "Digi", "Jazztel", "O2", "Lowi", "Simyo", "Pepephone", "Otros"]
 
+// Validación
 const formSchema = z.object({
   clienteId: z.string().min(1, "Selecciona un cliente."),
-  operadorDestino: z.string().min(1, "Selecciona operador."),
+  operadorDestino: z.string().min(1, "Selecciona operador destino."),
+  operadorAntiguo: z.string().min(1, "Selecciona operador donante."),
+  direccionInstalacion: z.string().min(1, "La dirección es obligatoria"),
   servicios: z.array(z.object({
     nombre: z.string().min(1, "Requerido"),
     precioBase: z.coerce.number().min(0, "Mínimo 0"),
     detalles: z.string().optional()
-  })).min(0),
+  })).min(1, "Añade al menos un servicio"),
   precioCierre: z.number(),
   observaciones: z.string().optional(),
 })
-
 
 function InfoItem({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
   return (
@@ -51,7 +54,6 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode, label: string
   )
 }
 
-
 const renderDesgloseTags = (name: string) => {
   const parts = name.split('+').map(p => p.trim());
   return (
@@ -61,7 +63,7 @@ const renderDesgloseTags = (name: string) => {
         const p = part.toLowerCase();
         if (p.includes('mb') || p.includes('fibra')) icon = <Wifi size={10} />;
         if (p.includes('gb') || p.includes('ilim') || p.includes('movil')) icon = <Smartphone size={10} />;
-        if (p.includes('tv') || p.includes('video') || p.includes('serié') || p.includes('disney') || p.includes('netflix') || p.includes('hbo')) icon = <Tv size={10} />;
+        if (p.includes('tv') || p.includes('video') || p.includes('serié')) icon = <Tv size={10} />;
         return (
           <Badge key={i} variant="secondary" className="bg-white/10 text-[9px] text-white border-none py-0.5 px-2 flex items-center gap-1 font-medium whitespace-nowrap">
             {icon} {part}
@@ -78,18 +80,15 @@ export function SalesForm() {
   const [clients, setClients] = React.useState<any[]>([])
   const [availableProducts, setAvailableProducts] = React.useState<any[]>([])
   const [selectedClient, setSelectedClient] = React.useState<any | null>(null)
-  
-  // estado para la búsqueda interactiva en el catálogo
   const [catalogSearch, setCatalogSearch] = React.useState("")
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { clienteId: "", operadorDestino: "", servicios: [], precioCierre: 0, observaciones: "" },
+    defaultValues: { clienteId: "", operadorDestino: "", operadorAntiguo: "", direccionInstalacion: "", servicios: [], precioCierre: 0, observaciones: "" },
   })
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "servicios" })
 
-  // carga inicial de clientes
   React.useEffect(() => {
     async function loadClients() {
       try {
@@ -101,9 +100,24 @@ export function SalesForm() {
     loadClients();
   }, []);
 
+  // AL SELECCIONAR CLIENTE: AUTO-RELLENAR DIRECCIÓN Y OPERADOR
+  const handleSelectClient = (c: any) => {
+    setSelectedClient(c);
+    form.setValue("clienteId", c.id.toString());
+    
+    // Auto-relleno inteligente
+    if (c.address) form.setValue("direccionInstalacion", c.address);
+    if (c.operator && OPERATOR_OPTIONS.includes(c.operator)) {
+        form.setValue("operadorAntiguo", c.operator);
+    } else {
+        form.setValue("operadorAntiguo", ""); // Reset si no coincide o no tiene
+    }
+    
+    setOpenSearch(false);
+  }
+
   const operadorDestino = form.watch("operadorDestino");
 
-  // carga de servicios según la operadora seleccionada
   React.useEffect(() => {
     async function loadProducts() {
       if (!operadorDestino) { setAvailableProducts([]); return; }
@@ -116,14 +130,8 @@ export function SalesForm() {
     loadProducts();
   }, [operadorDestino]);
 
-  /**
-   * clasificación de servicios/productos según su categoría sean combos, conectividad o extras, además de aplicar el filtro de búsqueda
-   */
   const catalog = React.useMemo(() => {
-    const filtered = availableProducts.filter(p => 
-      p.name.toLowerCase().includes(catalogSearch.toLowerCase())
-    );
-
+    const filtered = availableProducts.filter(p => p.name.toLowerCase().includes(catalogSearch.toLowerCase()));
     return {
       combos: filtered.filter(p => p.category === 'COMBO'),
       connectivity: filtered.filter(p => p.category === 'SOLO_MOVIL' || p.category === 'SOLO_FIBRA'),
@@ -131,9 +139,6 @@ export function SalesForm() {
     };
   }, [availableProducts, catalogSearch]);
 
-  /**
-   * lógica de impuestos según provincias
-   */
   const watchServicios = form.watch("servicios");
   const fiscal = React.useMemo(() => {
     const subtotal = watchServicios.reduce((acc, curr) => acc + (Number(curr.precioBase) || 0), 0);
@@ -144,14 +149,21 @@ export function SalesForm() {
     return { subtotal, tax: subtotal * rate, total: subtotal + (subtotal * rate), name, pct: rate * 100 };
   }, [watchServicios, selectedClient]);
 
-  // precio que se actualiza al momento de cerra la venta
   React.useEffect(() => { form.setValue("precioCierre", fiscal.total); }, [fiscal.total, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      const primary = values.servicios[0];
       const res = await httpClient('/api2/sales', {
         method: 'POST',
-        body: JSON.stringify({ ...values, usuario_id: user?.id, usuario_nombre: user?.nombre }),
+        body: JSON.stringify({ 
+          ...values, 
+          usuario_id: user?.id, 
+          usuario_nombre: user?.nombre,
+          status: "PTE COMERCIAL",
+          promocion_nombre: primary.nombre,
+          promocion_detalles: primary.detalles || ""
+        }),
       });
       if (res.ok) { 
         toast.success("Venta registrada con éxito"); 
@@ -165,17 +177,11 @@ export function SalesForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6">
         
-        {/*placeholder de búsqueda cliente*/}
+        {/* BUSCADOR */}
         <div className="relative max-w-4xl mx-auto pt-4 pb-4 animate-in fade-in slide-in-from-top-4 duration-700">
           <Popover open={openSearch} onOpenChange={setOpenSearch}>
             <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                className={cn(
-                  "w-full justify-between h-20 px-8 rounded-[2rem] border-none shadow-[0_15px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition-all duration-500",
-                  selectedClient ? "bg-white ring-1 ring-slate-200" : "bg-white hover:bg-slate-50"
-                )}
-              >
+              <Button variant="outline" className={cn("w-full justify-between h-20 px-8 rounded-[2rem] border-none shadow-[0_15px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition-all duration-500", selectedClient ? "bg-white ring-1 ring-slate-200" : "bg-white hover:bg-slate-50")}>
                 <div className="flex items-center gap-5 text-left">
                   {selectedClient ? (
                     <>
@@ -206,7 +212,7 @@ export function SalesForm() {
                   <CommandEmpty className="py-12 text-center text-xs font-black text-slate-400 uppercase">No hay resultados</CommandEmpty>
                   <CommandGroup heading="Clientes Disponibles">
                     {clients.map((c) => (
-                      <CommandItem key={c.id} onSelect={() => { setSelectedClient(c); form.setValue("clienteId", c.id.toString()); setOpenSearch(false); }} className="flex items-center gap-4 p-4 mb-2 rounded-[1.5rem] cursor-pointer aria-selected:bg-slate-900 aria-selected:text-white transition-all group">
+                      <CommandItem key={c.id} onSelect={() => handleSelectClient(c)} className="flex items-center gap-4 p-4 mb-2 rounded-[1.5rem] cursor-pointer aria-selected:bg-slate-900 aria-selected:text-white transition-all group">
                         <div className="h-11 w-11 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-500 group-aria-selected:text-slate-900">{c.name.charAt(0)}</div>
                         <div className="flex flex-col flex-1"><span className="font-black text-sm uppercase tracking-tight">{c.name}</span><span className="text-[10px] font-bold opacity-50">{c.dni}</span></div>
                         <CheckCircle2 className="h-5 w-5 opacity-0 group-aria-selected:opacity-100 text-sky-400" />
@@ -219,12 +225,12 @@ export function SalesForm() {
           </Popover>
         </div>
 
-        {/*datos del cliente seleccionado*/}
+        {/* FICHA CLIENTE */}
         {selectedClient && (
           <Card className="border border-sky-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-sky-50/50 px-8 py-4 border-b border-sky-100 flex justify-between items-center text-sm font-bold text-sky-800 uppercase">
               <span className="flex items-center gap-2"><UserCircle className="h-5 w-5" /> Ficha del Titular</span>
-              <Button variant="ghost" size="sm" className="text-sky-400 hover:text-red-500 rounded-full h-8 text-[10px] font-bold" onClick={() => { setSelectedClient(null); form.setValue("clienteId", ""); }}>CAMBIAR CLIENTE</Button>
+              <Button variant="ghost" size="sm" className="text-sky-400 hover:text-red-500 rounded-full h-8 text-[10px] font-bold" onClick={() => { setSelectedClient(null); form.setValue("clienteId", ""); form.reset(); }}>CAMBIAR CLIENTE</Button>
             </div>
             <CardContent className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <InfoItem icon={<User />} label="Nombre" value={selectedClient.name} />
@@ -239,9 +245,10 @@ export function SalesForm() {
           </Card>
         )}
 
+        {/* CUERPO PRINCIPAL */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {}
+          {/* CATALOGO LATERAL */}
           <Card className="lg:col-span-4 border-none rounded-[2.5rem] shadow-xl bg-[#0f172a] text-white overflow-hidden h-[85vh] sticky top-8 flex flex-col">
             <div className="p-8 pb-4 space-y-4">
               <h3 className="text-sky-400 font-black text-xs uppercase tracking-widest flex items-center gap-2"><Box size={16} /> Catálogo de Operadora</h3>
@@ -254,7 +261,6 @@ export function SalesForm() {
                   </Select>
                 )} />
 
-                {}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                   <Input 
@@ -275,7 +281,7 @@ export function SalesForm() {
             <div className="flex-1 overflow-y-auto px-8 pb-8 space-y-8 scrollbar-thin scrollbar-thumb-white/10">
               {operadorDestino ? (
                 <>
-                  {}
+                  {/* COMBOS */}
                   {catalog.combos.length > 0 && (
                     <div className="space-y-3">
                       <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-amber-400 sticky top-0 bg-[#0f172a] py-2 z-10"><Gift size={14}/> Combos Convergentes</span>
@@ -309,7 +315,7 @@ export function SalesForm() {
                     </div>
                   )}
 
-                  {/* servicios de fibra y móvil */}
+                  {/* CONECTIVIDAD */}
                   {catalog.connectivity.length > 0 && (
                     <div className="space-y-3">
                       <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-sky-400 sticky top-0 bg-[#0f172a] py-2 z-10"><Wifi size={14}/> Fibra y Móvil</span>
@@ -317,11 +323,7 @@ export function SalesForm() {
                         {catalog.connectivity.map(p => (
                           <button 
                             key={p.id} type="button" 
-                            onClick={() => append({ 
-                              nombre: p.name, 
-                              precioBase: Number(p.price),
-                              detalles: p.promo_note ? `OFERTA: ${p.promo_note}` : ""
-                            })} 
+                            onClick={() => append({ nombre: p.name, precioBase: Number(p.price), detalles: p.promo_note ? `OFERTA: ${p.promo_note}` : "" })} 
                             className="p-3 flex justify-between items-center rounded-xl bg-white/5 border border-white/10 hover:border-sky-500 transition-all text-left group"
                           >
                             <div className="space-y-0.5">
@@ -338,7 +340,7 @@ export function SalesForm() {
                     </div>
                   )}
 
-                  {/* servicios cm tv o móviles extras*/}
+                  {/* EXTRAS */}
                   {catalog.extras.length > 0 && (
                     <div className="space-y-3">
                       <span className="flex items-center gap-2 font-bold text-[10px] uppercase text-purple-400 sticky top-0 bg-[#0f172a] py-2 z-10"><Tv size={14}/> TV y Streaming</span>
@@ -361,17 +363,8 @@ export function SalesForm() {
                       </div>
                     </div>
                   )}
-
-                  {/* estado de búsqueda */}
-                  {catalog.combos.length === 0 && catalog.connectivity.length === 0 && catalog.extras.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20 text-white/20">
-                      <Filter size={40} className="mb-4" />
-                      <p className="text-xs font-bold uppercase">Sin resultados para "{catalogSearch}"</p>
-                    </div>
-                  )}
                 </>
               ) : (
-                
                 <div className="flex flex-col items-center justify-center py-40 text-white/20">
                   <Box size={40} className="mb-4" />
                   <p className="text-xs font-bold uppercase">Selecciona una operadora</p>
@@ -380,13 +373,55 @@ export function SalesForm() {
             </div>
           </Card>
 
-          {/*resumen de la ficha del cliente*/}
+          {/* RESUMEN DE VENTA */}
           <div className="lg:col-span-8 space-y-6">
+            
+            {/* CAMPOS DINÁMICOS Y SELECTORES */}
+            {selectedClient && (
+               <Card className="border-none rounded-[2.5rem] shadow-sm bg-white p-8 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-500">
+                  
+                  {/* DIRECCIÓN DE INSTALACIÓN (Auto-rellenada) */}
+                  <FormField control={form.control} name="direccionInstalacion" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] font-black uppercase text-slate-400 ml-1">Dirección Instalación</FormLabel>
+                      <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="Sin dirección registrada..." 
+                            className="rounded-xl bg-slate-50 border-none h-12 font-bold focus:ring-2 ring-sky-500 placeholder:text-slate-300 placeholder:font-normal" 
+                          />
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )} />
+
+                  {/*seleccion de operadores donantes*/}
+                  <FormField control={form.control} name="operadorAntiguo" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[10px] font-black uppercase text-slate-400 ml-1">Operador Donante</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="rounded-xl bg-slate-50 border-none h-12 font-bold focus:ring-2 ring-sky-500">
+                             <SelectValue placeholder="Seleccionar..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="max-h-[300px]">
+                           {OPERATOR_OPTIONS.map(op => (
+                               <SelectItem key={op} value={op} className="font-medium cursor-pointer">{op}</SelectItem>
+                           ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )} />
+               </Card>
+            )}
+
             <Card className="border border-slate-100 rounded-[2.5rem] shadow-sm bg-white overflow-hidden">
-              <div className="p-8 border-b border-slate-50 flex justify-between items-center">
-                <h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm"><Receipt className="h-5 w-5 text-sky-500" /> Resumen del Cliente</h3>
-                <Button type="button" variant="outline" onClick={() => append({ nombre: "", precioBase: 0, detalles: "" })} className="rounded-full px-6 border-sky-100 text-sky-600 hover:bg-sky-50 font-bold text-xs">
-                  Añadir servicio manualmente 
+              <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                <h3 className="font-bold text-slate-800 flex items-center gap-2 uppercase text-sm"><Receipt className="h-5 w-5 text-sky-500" /> Resumen de Servicios</h3>
+                <Button type="button" variant="outline" onClick={() => append({ nombre: "", precioBase: 0 })} className="rounded-full px-6 border-sky-100 text-sky-600 hover:bg-sky-50 font-bold text-xs">
+                  Añadir manualmente 
                 </Button>
               </div>
               <CardContent className="p-8 space-y-4">
@@ -396,7 +431,7 @@ export function SalesForm() {
                       <div className="flex-1 grid grid-cols-12 gap-4">
                         <div className="md:col-span-8 space-y-1">
                           <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Producto</label>
-                          <Input {...form.register(`servicios.${index}.nombre`)} className="bg-white border-none shadow-sm rounded-xl h-11 font-bold uppercase" />
+                          <Input {...form.register(`servicios.${index}.nombre`)} className="bg-white border-none shadow-sm rounded-xl h-11 font-bold uppercase text-xs" />
                         </div>
                         <div className="md:col-span-4 space-y-1">
                           <label className="text-[9px] font-black text-slate-400 uppercase text-right mr-1">Precio (€)</label>
@@ -407,7 +442,6 @@ export function SalesForm() {
                         <Trash2 size={20} />
                       </Button>
                     </div>
-                    {/* visualización de la promoción y los detalles de la venta */}
                     {form.watch(`servicios.${index}.detalles`) && (
                       <p className="text-[10px] text-amber-600 font-bold italic ml-1 flex items-center gap-1"> 
                         <Gift size={10} /> {form.watch(`servicios.${index}.detalles`)}
@@ -416,16 +450,10 @@ export function SalesForm() {
                   </div>
                 ))}
 
-                {fields.length === 0 && (
-                   <div className="py-20 text-center border-2 border-dashed border-slate-100 rounded-[2rem]">
-                      <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Añade servicios</p>
-                   </div>
-                )}
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-100">
                   <div className="space-y-2">
-                    <FormLabel className="text-xs font-bold text-slate-400 uppercase">Observaciones de la Venta</FormLabel>
-                    <Textarea {...form.register("observaciones")} className="border-slate-100 rounded-2xl min-h-[120px] bg-slate-50/50 placeholder:text-slate-300" placeholder="Añade notas adicionales aquí..." />
+                    <FormLabel className="text-xs font-bold text-slate-400 uppercase">Observaciones</FormLabel>
+                    <Textarea {...form.register("observaciones")} className="border-slate-100 rounded-2xl min-h-[120px] bg-slate-50/50" placeholder="Añade notas..." />
                   </div>
                   <div className="flex flex-col gap-4">
                     <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-xl">
@@ -441,7 +469,7 @@ export function SalesForm() {
                         </div>
                       </div>
                     </div>
-                    <Button type="submit" disabled={fields.length === 0} className="w-full h-16 text-lg font-bold rounded-2xl bg-sky-600 hover:bg-sky-700 shadow-xl transition-all uppercase tracking-widest disabled:opacity-50">
+                    <Button type="submit" disabled={fields.length === 0} className="w-full h-16 text-lg font-bold rounded-2xl bg-sky-600 hover:bg-sky-700 shadow-xl transition-all uppercase tracking-widest">
                       REGISTRAR VENTA
                     </Button>
                   </div>

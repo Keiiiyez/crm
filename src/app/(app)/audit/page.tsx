@@ -59,7 +59,7 @@ function AuditContent() {
   const [pages, setPages] = React.useState(1)
   const [limit] = React.useState(50)
 
-  // Filtros
+  // filtros
   const [filterUsuario, setFilterUsuario] = React.useState("")
   const [filterTabla, setFilterTabla] = React.useState("")
   const [filterTipo, setFilterTipo] = React.useState("")
@@ -67,7 +67,7 @@ function AuditContent() {
   const [tablas, setTablas] = React.useState<string[]>([])
   const [tipos, setTipos] = React.useState<string[]>([])
 
-  // Detalle expandido
+  // detalles
   const [expandedId, setExpandedId] = React.useState<number | null>(null)
 
   const loadAudit = React.useCallback(async () => {
@@ -153,7 +153,7 @@ function AuditContent() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 lg:p-12 space-y-8">
-      {/* Header */}
+      {/* encabezado */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 max-w-[1600px] mx-auto">
         <div className="flex items-center gap-5">
           <div className="h-14 w-14 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
@@ -176,7 +176,7 @@ function AuditContent() {
         )}
       </div>
 
-      {/* Filtros */}
+      {/*filtros */}
       <Card className="border-none shadow-sm rounded-[2rem] bg-white max-w-[1600px] mx-auto">
         <CardHeader className="p-6 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -251,7 +251,7 @@ function AuditContent() {
         </CardContent>
       </Card>
 
-      {/* Tabla */}
+      {/* tabla */}
       <Card className="border-none shadow-sm rounded-[2rem] bg-white max-w-[1600px] mx-auto overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
