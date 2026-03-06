@@ -75,7 +75,7 @@ function ReportsContent() {
     const exportData: any[] = [];
 
     Object.entries(groupedData).forEach(([coordName, coordData]: any) => {
-      exportData.push({ "EQUIPO": `>> EQUIPO: ${coordName.toUpperCase()} <<`, "IMPORTE": `TOTAL: ${coordData.total.toFixed(2)}€` });
+      exportData.push({ "EQUIPO": `: ${coordName.toUpperCase()} `, "IMPORTE": `TOTAL: ${coordData.total.toFixed(2)}€` });
       exportData.push({ "FECHA": "FECHA", "ASESOR": "ASESOR", "CLIENTE": "CLIENTE", "DNI": "DNI", "OPERADOR": "OPERADOR", "IMPORTE": "IMPORTE" });
 
       Object.entries(coordData.asesores).forEach(([asesorName, asesorData]: any) => {
@@ -111,7 +111,7 @@ function ReportsContent() {
           </div>
           <div>
             <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">Informes <span className="text-slate-400 font-light">de</span> Producción</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-0.5">Rendimiento jerárquico por equipos</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-0.5">Rendimiento</p>
           </div>
         </div>
 
@@ -139,7 +139,7 @@ function ReportsContent() {
       <div className="max-w-[1600px] mx-auto space-y-14">
         {Object.entries(groupedData).map(([coordName, coordData]: any) => (
           <div key={coordName} className="space-y-6">
-            {/* Banner Coordinador */}
+            {/* apartado del encargado */}
             <div className="flex items-center justify-between bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
               <div className="flex items-center gap-4">
                 <div className="h-14 w-14 bg-slate-900 rounded-[1.2rem] flex items-center justify-center">
@@ -158,7 +158,7 @@ function ReportsContent() {
               </div>
             </div>
 
-            {/* Asesores */}
+            {/* colaboradores */}
             <div className="grid gap-6 md:grid-cols-2">
               {Object.entries(coordData.asesores).map(([asesorName, asesorData]: any) => (
                 <Card key={asesorName} className="border-none shadow-sm rounded-[2.5rem] overflow-hidden bg-white group hover:shadow-xl transition-all duration-300">

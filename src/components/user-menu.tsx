@@ -66,7 +66,7 @@ export function UserMenu() {
           <>
             <DropdownMenuItem disabled>
               <div className="text-xs flex flex-col">
-                <span className="text-muted-foreground">Operadora asignada:</span>
+                <span className="text-muted-foreground"></span>
                 <span className="font-medium">{user.operadora_asignada}</span>
               </div>
             </DropdownMenuItem>

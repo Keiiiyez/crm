@@ -7,26 +7,21 @@ import {
   FileSpreadsheet, 
   AlertCircle, 
   User, 
-  MapPin, 
   CreditCard, 
   Fingerprint,
-  Calendar,
   Building2,
   CheckCircle2,
   XCircle,
-  Mail,
-  Phone,
-  Globe,
-  Info
+  Search,
+  ChevronRight
 } from "lucide-react"
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
 
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
@@ -34,7 +29,6 @@ import { cn } from "@/lib/utils"
 
 import { DataTable } from "@/components/data-table"
 import { columns } from "@/components/clients/columns"
-import { OPERATOR_OPTIONS } from "@/lib/data"
 import type { Client } from "@/lib/definitions"
 import { httpClient } from "@/lib/http-client"
 import { validateSpanishID, validateIBAN, formatIBAN } from "@/lib/validators"
@@ -45,7 +39,6 @@ export default function ClientsPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [editingClient, setEditingClient] = React.useState<any | null>(null)
   
-  // Mantenemos estos estados para la lógica interna aunque no haya inputs
   const [operator, setOperator] = React.useState<string>("")
   const [ibanValue, setIbanValue] = React.useState("")
   const [dniValue, setDniValue] = React.useState("")
@@ -133,32 +126,27 @@ export default function ClientsPage() {
 
         const rawIban = String(findValueNextTo(["No. DE CUENTA", "IBAN", "Nº cuenta"])) || "";
         const rawDni = String(findValueNextTo(["CIF / NIF", "NIF/NIE", "DNI"])).trim().toUpperCase();
+        
+        // Intento de parsear nombre completo desde Excel a campos separados
+        const rawFullName = String(findValueNextTo(["TITULAR", "NOMBRE"])).trim();
+        const nameParts = rawFullName.split(" ");
 
         const excelData: any = {
-          name: String(findValueNextTo(["TITULAR", "NOMBRE"])).trim(),
+          firstName: nameParts[0] || "",
+          lastName1: nameParts[1] || "",
+          lastName2: nameParts.slice(2).join(" ") || "",
           dni: rawDni,
           email: String(findValueNextTo(["E-MAIL", "CORREO"])).trim().toLowerCase(),
-          address: String(findValueNextTo(["DIRECCION", "DOMICILIO"])).trim(),
-          city: String(findValueNextTo(["LOCALIDAD", "POBLACION"])).trim(),
-          province: String(findValueNextTo(["PROVINCIA"])).trim(),
-          postalCode: String(findValueNextTo(["CODIGO POSTAL", "C.P."])).trim(),
           phone: String(findValueNextTo(["TELEFONO", "MOVIL"])).trim(),
           iban: rawIban,
           operator: String(findValueNextTo(["OPERADOR", "COMPAÑÍA"])).trim(),
           nationality: String(findValueNextTo(["NACIONALIDAD"])).trim(),
-          birthDate: String(findValueNextTo(["FECHA NAC.", "FECHA DE NACIMIENTO"])).trim(),
-          gender: String(findValueNextTo(["GENERO", "GÉNERO"])).trim(),
           bankName: String(findValueNextTo(["BANCO"])).trim(),
           observations: String(findValueNextTo(["OBSERVACIONES"])).trim()
         };
 
-        const rawPrice = String(findValueNextTo(["TOTAL A PAGAR", "PROMOCION"]));
-        const cleanPrice = rawPrice.replace(/[^\d,.]/g, '').replace(',', '.');
-        const finalPrice = parseFloat(cleanPrice) || 0;
-        
         setPendingSale({
-          total: finalPrice,
-          observations: excelData.observations,
+          total: parseFloat(String(findValueNextTo(["TOTAL A PAGAR", "PROMOCION"])).replace(/[^\d,.]/g, '').replace(',', '.')) || 0,
           operator_destino: excelData.operator
         });
 
@@ -167,7 +155,7 @@ export default function ClientsPage() {
         handleDniChange(rawDni); 
         handleIbanChange(rawIban); 
         setOpen(true);
-        toast.success("Excel procesado con éxito");
+        toast.success("Excel procesado: Distribuye los apellidos si es necesario");
       } catch (error: any) {
         toast.error("Error al procesar el archivo Excel");
       }
@@ -177,7 +165,14 @@ export default function ClientsPage() {
   };
 
   const handleEdit = (client: any) => {
-    setEditingClient(client)
+    // Al editar, si no tenemos los campos separados, intentamos separar el 'name'
+    const nameParts = (client.name || "").split(" ");
+    setEditingClient({
+        ...client,
+        firstName: client.firstName || nameParts[0] || "",
+        lastName1: client.lastName1 || nameParts[1] || "",
+        lastName2: client.lastName2 || nameParts.slice(2).join(" ") || ""
+    })
     setOperator(client.operator || "") 
     handleDniChange(client.dni || "")
     handleIbanChange(client.iban || "")
@@ -192,22 +187,21 @@ export default function ClientsPage() {
     }
 
     const formData = new FormData(event.currentTarget);
-    const clientFields = Object.fromEntries(formData.entries());
+    const fields = Object.fromEntries(formData.entries());
 
     setIsSubmitting(true);
 
+    // Construcción del nombre completo para el sistema
+    const fullName = `${fields.firstName} ${fields.lastName1} ${fields.lastName2 || ""}`.trim().toUpperCase();
+
     const finalPayload = {
       client: {
-        ...clientFields,
+        ...fields,
+        name: fullName, // Mantenemos compatibilidad con el campo 'name'
         dni: dniValue,
         iban: ibanValue.replace(/\s/g, ""),
-        bankName: detectedBank || clientFields.bankName,
+        bankName: detectedBank || (fields.bankName as string),
         id: editingClient?.id || undefined, 
-        // Recuperamos los datos de dirección/operador si ya existían o vienen del Excel
-        address: editingClient?.address || "",
-        city: editingClient?.city || "",
-        province: editingClient?.province || "",
-        postalCode: editingClient?.postalCode || "",
         operator: operator || editingClient?.operator || ""
       },
       sale: pendingSale && pendingSale.total > 0 ? pendingSale : null
@@ -222,24 +216,21 @@ export default function ClientsPage() {
       });
 
       if (response.ok) {
-        toast.success(editingClient?.id ? "Registro actualizado" : "Cliente guardado");
+        toast.success("Operación completada");
         setOpen(false);
         httpClients(); 
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || "Error en el servidor");
       }
     } catch (error) {
-      toast.error("Error al procesar la solicitud");
+      toast.error("Error en la solicitud");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-6 lg:p-12 space-y-10">
+    <div className="min-h-screen bg-slate-50/50 p-6 lg:p-12 space-y-10 text-left">
       
-      {/* HEADER SECTIOM */}
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 max-w-[1600px] mx-auto">
         <div className="flex items-center gap-5">
           <div className="h-14 w-14 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center">
@@ -281,7 +272,6 @@ export default function ClientsPage() {
                 </div>
 
                 <div className="p-10 space-y-10 bg-white overflow-y-auto max-h-[70vh]">
-                  {/* ALERTA VALIDACIONES */}
                   {(validationErrors.dni || validationErrors.iban) && (
                     <Alert className="bg-red-50 border-none rounded-2xl py-4 flex items-center">
                       <AlertCircle className="h-5 w-5 text-red-500 mr-3" />
@@ -293,14 +283,27 @@ export default function ClientsPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     
-                    {/* COLUMNA 1: IDENTIDAD (Sin Dirección) */}
+                    {/* COLUMNA 1: DATOS PERSONALES SEPARADOS */}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b pb-3"><Fingerprint size={14}/> Datos Personales</h4>
                       <div className="space-y-4">
+                        
                         <div className="space-y-1">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase">Nombre Completo</Label>
-                          <Input name="name" defaultValue={editingClient?.name || ""} required className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
+                          <Label className="text-[10px] font-black text-slate-400 uppercase">Nombre</Label>
+                          <Input name="firstName" defaultValue={editingClient?.firstName || ""} required placeholder="Ej: Juan Antonio" className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
                         </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase">Primer Apellido</Label>
+                                <Input name="lastName1" defaultValue={editingClient?.lastName1 || ""} required placeholder="" className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase">Segundo Apellido (Opcional)</Label>
+                                <Input name="lastName2" defaultValue={editingClient?.lastName2 || ""} placeholder="" className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
+                            </div>
+                        </div>
+
                         <div className="space-y-1">
                           <Label className="text-[10px] font-black text-slate-400 uppercase">DNI / NIE / CIF</Label>
                           <div className="relative">
@@ -312,6 +315,7 @@ export default function ClientsPage() {
                             )}
                           </div>
                         </div>
+
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1">
                             <Label className="text-[9px] font-bold text-slate-400 uppercase">Móvil</Label>
@@ -322,17 +326,10 @@ export default function ClientsPage() {
                             <Input name="email" type="email" defaultValue={editingClient?.email || ""} required className="bg-slate-50 border-none rounded-2xl font-bold h-12" />
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                           <div className="space-y-1">
-                            <Label className="text-[9px] font-bold text-slate-400 uppercase">Nacionalidad</Label>
-                            <Input name="nationality" defaultValue={editingClient?.nationality || ""} className="bg-slate-50 border-none rounded-2xl text-xs font-bold h-12" />
-                          </div>
-                         
-                        </div>
                       </div>
                     </div>
 
-                    {/* COLUMNA 2: FACTURACIÓN (Sin Operador) */}
+                    {/* COLUMNA 2: FACTURACIÓN */}
                     <div className="space-y-6">
                       <h4 className="text-[10px] font-black text-cyan-600 uppercase tracking-widest flex items-center gap-2 border-b pb-3"><CreditCard size={14}/> Datos Bancarios</h4>
                       <div className="space-y-4">
@@ -348,15 +345,15 @@ export default function ClientsPage() {
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase">Entidad</Label>
+                          <Label className="text-[10px] font-black text-slate-400 uppercase">Entidad Detectada</Label>
                           <div className="relative">
                             <Input name="bankName" value={detectedBank || (editingClient?.bankName || "")} onChange={(e) => setDetectedBank(e.target.value)} className="bg-slate-50 border-none rounded-2xl font-bold h-12 pl-10" />
                             <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-[10px] font-black text-slate-400 uppercase">Observaciones</Label>
-                          <Textarea name="observations" defaultValue={editingClient?.observations || ""} className="bg-slate-50 border-none rounded-2xl h-24 text-[11px] font-bold resize-none" />
+                          <Label className="text-[10px] font-black text-slate-400 uppercase">Observaciones Internas</Label>
+                          <Textarea name="observations" defaultValue={editingClient?.observations || ""} className="bg-slate-50 border-none rounded-2xl h-32 text-[11px] font-bold resize-none" />
                         </div>
                       </div>
                     </div>
@@ -366,7 +363,7 @@ export default function ClientsPage() {
 
                 <DialogFooter className="p-10 bg-slate-50 border-t border-slate-100">
                   <Button type="submit" className="w-full h-16 bg-slate-900 hover:bg-cyan-600 text-white font-black rounded-3xl uppercase text-xs tracking-[0.2em] transition-all disabled:opacity-50" disabled={isSubmitting || validationErrors.dni || validationErrors.iban}>
-                    {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Guardar Ficha de Cliente"}
+                    {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Finalizar y Guardar Registro"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -375,8 +372,8 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto px-4">
-        <DataTable columns={columns(handleEdit, httpClients)} data={data} filterInputPlaceholder="Buscar por nombre o DNI..." />
+      <div className="max-w-[1600px] mx-auto">
+        <DataTable columns={columns(handleEdit, httpClients)} data={data} filterInputPlaceholder="Filtrar por nombre, DNI o banco..." />
       </div>
     </div>
   )

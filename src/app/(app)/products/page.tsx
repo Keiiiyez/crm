@@ -188,7 +188,7 @@ export default function ProductsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tighter text-slate-900 uppercase">REGISTRO <span className="text-slate-400 font-light">DE</span> SERVICIOS</h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-0.5">Gestión centralizada de tarifas</p>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-0.5">Gestión de tarifas</p>
           </div>
         </div>
 
@@ -263,8 +263,8 @@ export default function ProductsPage() {
                         <Switch checked={form.landline} onCheckedChange={(v) => setForm({...form, landline: v})} className="scale-75" />
                       </div>
                       <div className="flex gap-1.5">
-                        {["300", "600", "1"].map(v => (
-                          <button key={v} type="button" onClick={() => setForm({...form, fiber: v})} className={cn("flex-1 py-2 rounded-lg text-[9px] font-black border-2 transition-all", form.fiber === v ? "bg-white border-blue-600 text-blue-600 shadow-sm" : "bg-transparent border-transparent text-slate-400")}>{v === "1" ? "1GB" : `${v}M`}</button>
+                        {["300", "500", "600", "1"].map(v => (
+                          <button key={v} type="button" onClick={() => setForm({...form, fiber: v})} className={cn("flex-1 py-2 rounded-lg text-[9px] font-black border-2 transition-all", form.fiber === v ? "bg-white border-blue-600 text-blue-600 shadow-sm" : "bg-transparent border-transparent text-slate-400")}>{v === "1" ? "1GB" : `${v}MB`}</button>
                         ))}
                       </div>
                     </div>
@@ -350,7 +350,7 @@ export default function ProductsPage() {
                     <Input 
                       value={form.promo_note} 
                       onChange={(e) => setForm({...form, promo_note: e.target.value})} 
-                      placeholder="NOTA: EJ. PRECIO FIJO O PROMO 3 MESES" 
+                      placeholder="Nota de vigencia (ej: 1 mes, 3 meses...)" 
                       className="h-10 pl-9 bg-slate-50 border-dashed border-slate-200 text-[9px] font-bold uppercase rounded-xl" 
                     />
                   </div>

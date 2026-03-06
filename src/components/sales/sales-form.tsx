@@ -25,7 +25,7 @@ import { toast } from "sonner"
 import { httpClient } from "@/lib/http-client"
 import { cn } from "@/lib/utils"
 
-const OPERATOR_OPTIONS = ["Vodafone", "Yoigo", "MásMóvil", "Movistar", "Orange", "Digi", "Jazztel", "O2", "Lowi", "Simyo", "Pepephone", "Otros"]
+const OPERATOR_OPTIONS = ["Vodafone", "Yoigo", "MásMóvil"]
 
 // Validación
 const formSchema = z.object({

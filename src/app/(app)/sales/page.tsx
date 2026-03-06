@@ -314,7 +314,7 @@ export default function SalesHistoryPage() {
             <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none"><ShieldCheck size={200} /></div>
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-2">
-                <Badge className="bg-cyan-500 text-slate-900 border-none text-[9px] font-black uppercase px-3">EXPEDIENTE DIGITAL</Badge>
+                <Badge className="bg-cyan-500 text-slate-900 border-none text-[9px] font-black uppercase px-3">Venta digital</Badge>
                 <span className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] flex items-center gap-2"><Clock size={14} /> {selectedSale && format(selectedSale.dateObj, "PPP", { locale: es })}</span>
               </div>
               <DialogTitle className="text-4xl font-black uppercase tracking-tighter">REF-{selectedSale?.id?.toString().padStart(6, '0')}</DialogTitle>
@@ -433,7 +433,7 @@ export default function SalesHistoryPage() {
             {/* BOTONES ACCIÓN */}
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
                 <Button disabled={isGeneratingPDF} onClick={() => downloadExpedientePDF(selectedSale)} className="flex-1 h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl uppercase text-xs tracking-[0.1em] flex items-center justify-center gap-3 shadow-xl">
-                  <Printer size={20} /> {isGeneratingPDF ? "Generando..." : "Descargar Expediente PDF"}
+                  <Printer size={20} /> {isGeneratingPDF ? "Generando..." : "Descargar Venta PDF"}
                 </Button>
                 <Button onClick={() => setIsModalOpen(false)} className="flex-1 h-16 bg-slate-900 text-white font-black rounded-2xl uppercase text-xs hover:bg-slate-800">Finalizar Revisión</Button>
             </div>

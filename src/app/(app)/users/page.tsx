@@ -116,9 +116,9 @@ function UsersContent() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Nombre y Apellido</label>
+                <label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Nombres y Apellidos</label>
                 <Input 
-                  placeholder="Ej: jsmith" 
+                  placeholder="Ej: Juan Smith" 
                   value={newUser.nombre} 
                   onChange={e => setNewUser({...newUser, nombre: e.target.value})} 
                   className="rounded-xl border-slate-100 bg-slate-50 h-12"
@@ -141,7 +141,7 @@ function UsersContent() {
                   method: "POST", 
                   body: JSON.stringify({
                     ...newUser,
-                    editorNombre: currentUser?.nombre || "Sistema Admin"
+                    editorNombre: currentUser?.nombre || "Admin"
                   }) 
                 });
                 if(res.ok) { 
@@ -199,7 +199,7 @@ function UsersContent() {
                     </div>
                   </TableCell>
 
-                  {/* ROL */}
+                  {/* roles */}
                   <TableCell className="text-center">
                     <Select defaultValue={user.rol} onValueChange={(val) => handleUpdate(user.id, 'role', val)}>
                       <SelectTrigger className="mx-auto w-32 h-8 rounded-lg text-[9px] font-black uppercase bg-slate-100 border-none shadow-sm text-slate-600 font-bold">
@@ -213,7 +213,7 @@ function UsersContent() {
                     </Select>
                   </TableCell>
 
-                  {/* ASIGNACIÓN COORDINADOR */}
+                  {/* asignación de un superior */}
                   <TableCell className="text-center">
                     {user.rol === "ASESOR" ? (
                       <Select 
@@ -281,7 +281,7 @@ function UsersContent() {
                               if(p) handleUpdate(user.id, 'password', p);
                             }}
                           >
-                            <Lock className="h-4 w-4 mr-2 text-amber-500" /> Forzar Cambio de Clave
+                            <Lock className="h-4 w-4 mr-2 text-amber-500" /> Cambiar de contraseña
                           </Button>
 
                           <div className="space-y-3">
